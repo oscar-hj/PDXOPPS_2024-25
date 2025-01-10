@@ -79,7 +79,7 @@ public class RoadrunnerTest extends LinearOpMode {
 
                 double time = timer.time();
                 packet.put("time", time);
-                if (time < 1.5){
+                if (time < .5){
                     return true;
                 }else{
                     slide.setPower(0);
@@ -98,6 +98,7 @@ public class RoadrunnerTest extends LinearOpMode {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 if (!initialized){
+                    sleep(1000);
                     slide.setPower(-0.8);
                     timer.reset();
                     initialized = true;
@@ -132,7 +133,7 @@ public class RoadrunnerTest extends LinearOpMode {
 
         public class SmallPivotForward implements Action{
             private boolean initialized = false;
-            int targetPos = pivotMotor.getCurrentPosition() + 320;
+            int targetPos = pivotMotor.getCurrentPosition() + 140;
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
@@ -150,30 +151,26 @@ public class RoadrunnerTest extends LinearOpMode {
             return new SmallPivotForward();
         }
 
-        public class Pause implements Action{
+        public class SmallPivotBackwards implements Action{
             private boolean initialized = false;
-            private final ElapsedTime timer = new ElapsedTime();
+            int targetPos = pivotMotor.getCurrentPosition() - 140;
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 if (!initialized){
+                    packet.put("targetPos", targetPos);
+                    pivotMotor.setTargetPosition(targetPos);
                     initialized = true;
-                    timer.reset();
                 }
 
-                double time = timer.time();
-                packet.put("time", time);
-                if (time < 15){
-                    return true;
-                }else{
-                    return false;
-                }
+                return pivotMotor.isBusy();
             }
         }
 
-        public Action pause(){
-            return new Pause();
+        public Action smallPivotBackwards(){
+            return new SmallPivotBackwards();
         }
+
     }
 
     // claw class
@@ -217,11 +214,25 @@ public class RoadrunnerTest extends LinearOpMode {
         Slide slide = new Slide(hardwareMap);
         Pivot pivot = new Pivot(hardwareMap);
 
-        TrajectoryActionBuilder act1 = drive.actionBuilder(initialPose)
+
+        TrajectoryActionBuilder startGoToRung = drive.actionBuilder(initialPose)
                 .strafeToConstantHeading(new Vector2d(-8, 34));
-        Action action2 = act1.endTrajectory().fresh()
-                .strafeTo(new Vector2d(-13, 60))
-                .build();
+        TrajectoryActionBuilder dragSamples = startGoToRung.endTrajectory().fresh()
+                .strafeToConstantHeading(new Vector2d(-36, 34))
+                .strafeToConstantHeading(new Vector2d(-36, 12))
+                .strafeToConstantHeading(new Vector2d(-46, 12))
+                .strafeToConstantHeading(new Vector2d(-46, 56))
+                .strafeToConstantHeading(new Vector2d(-46, 12))
+                .strafeToConstantHeading(new Vector2d(-52, 12))
+                .strafeToConstantHeading(new Vector2d(-52, 56))
+                .strafeToConstantHeading(new Vector2d(-52, 12))
+                .strafeToConstantHeading(new Vector2d(-60, 12))
+                .strafeToConstantHeading(new Vector2d(-60, 56));
+
+
+
+        Action StartGoToRung = startGoToRung.build();
+        Action DragSamples = dragSamples.build();
 
         Actions.runBlocking(claw.closeClaw());
 
@@ -233,20 +244,20 @@ public class RoadrunnerTest extends LinearOpMode {
         waitForStart();
         if (isStopRequested()) return;
 
-        Action action1 = act1.build();
-
 
         Actions.runBlocking(
                 new SequentialAction(
                         new ParallelAction(
-                                action1,
+                                StartGoToRung,
                                 slide.slideUp()
                         ),
                         new SequentialAction(
                                 pivot.smallPivotForward(),
                                 slide.specimenSlideDown(),
                                 claw.openClaw(),
-                                action2
+                                pivot.smallPivotBackwards(),
+                                slide.slideDown(),
+                                DragSamples
                         )
                 )
 
