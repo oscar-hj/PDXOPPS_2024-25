@@ -153,6 +153,7 @@ public class RoadrunnerTest extends LinearOpMode {
 
         public class SmallPivotBackwards implements Action{
             private boolean initialized = false;
+            private final ElapsedTime timer = new ElapsedTime();
             int targetPos = pivotMotor.getCurrentPosition() - 140;
 
             @Override
@@ -163,7 +164,14 @@ public class RoadrunnerTest extends LinearOpMode {
                     initialized = true;
                 }
 
-                return pivotMotor.isBusy();
+                double t = timer.time();
+                packet.put("t", t);
+                if (t < 3){
+                    return pivotMotor.isBusy();
+                } else{
+                    return false;
+                }
+
             }
         }
 
@@ -218,15 +226,16 @@ public class RoadrunnerTest extends LinearOpMode {
         TrajectoryActionBuilder startGoToRung = drive.actionBuilder(initialPose)
                 .strafeToConstantHeading(new Vector2d(-8, 34));
         TrajectoryActionBuilder dragSamples = startGoToRung.endTrajectory().fresh()
-                .strafeToConstantHeading(new Vector2d(-36, 34))
-                .strafeToConstantHeading(new Vector2d(-36, 12))
-                .strafeToConstantHeading(new Vector2d(-46, 12))
+                .strafeToConstantHeading(new Vector2d(-8, 38))   // go back a little
+                .strafeToConstantHeading(new Vector2d(-36, 38))  // slide
+                .strafeToConstantHeading(new Vector2d(-36, 12))  // go forward
+                .strafeToConstantHeading(new Vector2d(-46, 12))  // slide and drag
                 .strafeToConstantHeading(new Vector2d(-46, 56))
                 .strafeToConstantHeading(new Vector2d(-46, 12))
-                .strafeToConstantHeading(new Vector2d(-52, 12))
+                .strafeToConstantHeading(new Vector2d(-52, 12))  // slide and drag
                 .strafeToConstantHeading(new Vector2d(-52, 56))
                 .strafeToConstantHeading(new Vector2d(-52, 12))
-                .strafeToConstantHeading(new Vector2d(-60, 12))
+                .strafeToConstantHeading(new Vector2d(-60, 12))  // slide and drag
                 .strafeToConstantHeading(new Vector2d(-60, 56));
 
 
