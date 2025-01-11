@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode._teleop;
 
 import static java.lang.Math.abs;
 
+import com.qualcomm.hardware.dfrobot.HuskyLens;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -16,14 +17,15 @@ public class MainTeleOp_2GP extends LinearOpMode{
     DcMotor pivotMotor, slideMotor, hookMotor;
     CRServo clawServo, pivotServo;
     DistanceSensor distanceSensor;
+    HuskyLens lens;
     int pivotPos;
-    double gp1LSX, gp1LSY, gp1RSX, gp1RSY, gp1LT, gp1RT, gp2LSY, gp2RSY, gp2LT, gp2RT;
+    double gp1LSX, gp1LSY, gp1RSX, gp1RSY, gp1LT, gp1RT, gp2LSY, gp2RSY, gp2LT, gp2RT, gp2LSX, gp2RSX;
     boolean gp1LB, gp1RB, gp2DPadUp, gp2DPadDown, gp2DPadLeft, gp2DPadRight, gp2PS, gp2A, gp2B, gp2LB, gp2RB;
     double motorSpeedgp1, motorSpeedgp2, dis, slowSpeed = 0.1, normSpeed = 0.5, boostSpeed = 1, deadzone = 0.05;
 
     @Override
     public void runOpMode() {
-        initMotors();
+        initAll();
         waitForStart();
 
         if(opModeIsActive()){
@@ -47,7 +49,7 @@ public class MainTeleOp_2GP extends LinearOpMode{
 
                 // 2D movement and rotation
                 if(abs(gp1LSX) > deadzone | abs(gp1LSY) > deadzone | abs(gp1RSX) > deadzone) {
-                    Drive2D(gp1LSX, gp1LSY, gp1RSX, motorSpeedgp1);
+                    drive2D(gp1LSX, gp1LSY, gp1RSX, motorSpeedgp1);
                 } else{
                     stopDriveMotors();
                 }
@@ -110,18 +112,21 @@ public class MainTeleOp_2GP extends LinearOpMode{
                 } else if (gp2B) {
                     clawServo.setPower(-1);
                 }
-//                else{
-//                    clawServo.setPower(0);
-//                }
 
                 // rotate claw
-                if (gp2DPadLeft){
-                    pivotServo.setPower(1);
-                } else if (gp2DPadRight) {
-                    pivotServo.setPower(-1);
-                } else{
+                if (abs(gp2RSX) > deadzone){
+                    pivotServo.setPower(gp2RSX);
+                }else{
                     pivotServo.setPower(0);
                 }
+
+                // TODO: Husky lens detection and auto rotation
+                if (gp2PS){
+                    autoRotate();
+                }
+
+                // temp for testing
+                doHusky();
 
                 telemetry.update();
             }
@@ -134,7 +139,6 @@ public class MainTeleOp_2GP extends LinearOpMode{
         telemetry.addData("frontRight", frontRightMotor.getPower());
         telemetry.addData("backLeft", backLeftMotor.getPower());
         telemetry.addData("backRight", backRightMotor.getPower());
-        telemetry.update();
     }
     public void readGP1(){
         /*
@@ -162,7 +166,10 @@ public class MainTeleOp_2GP extends LinearOpMode{
 
          */
         gp2LSY = gamepad2.left_stick_y;
+        gp2LSX = gamepad2.left_stick_x;
+
         gp2RSY = gamepad2.right_stick_y;
+        gp2RSX = gamepad2.left_stick_x;
 
         gp2LT = gamepad2.left_trigger;
         gp2RT = gamepad2.right_trigger;
@@ -181,7 +188,7 @@ public class MainTeleOp_2GP extends LinearOpMode{
         gp2PS = gamepad2.ps;
 
     }
-    public void initMotors(){
+    public void initAll(){
         backRightMotor = hardwareMap.get(DcMotor.class, "BRM");
         frontRightMotor = hardwareMap.get(DcMotor.class, "FRM");
         backLeftMotor = hardwareMap.get(DcMotor.class, "BLM");
@@ -212,9 +219,12 @@ public class MainTeleOp_2GP extends LinearOpMode{
         clawServo = hardwareMap.get(CRServo.class, "clawServo");
         pivotServo = hardwareMap.get(CRServo.class, "pivotServo");
         distanceSensor = hardwareMap.get(DistanceSensor.class, "distanceSensor");
+
+        lens = hardwareMap.get(HuskyLens.class, "lens");
+        lens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
     }
 
-    public void Drive2D(double valx, double valy, double valr, double speed){
+    public void drive2D(double valx, double valy, double valr, double speed){
         frontLeftMotor.setPower((valy - valx - valr) * speed);
         frontRightMotor.setPower((valy + valx + valr) * speed);
         backLeftMotor.setPower((valy + valx - valr) * speed);
@@ -244,5 +254,25 @@ public class MainTeleOp_2GP extends LinearOpMode{
         backRightMotor.setPower(0);
 
         getDriveMotorTele();
+    }
+
+    public void autoRotate(){
+        HuskyLens.Block[] blockArr = lens.blocks();
+
+        if (blockArr.length >= 2){
+            telemetry.addLine("WARNING: THERE ARE 2 OR MORE SAMPLES DETECTED");
+        }
+    }
+    public void doHusky(){
+        /* Color IDs
+        YELLOW: ??
+        RED: ??
+        BLUE: ??
+        */
+        HuskyLens.Block[] blockArr = lens.blocks();
+
+        for (HuskyLens.Block block : blockArr) {
+            telemetry.addData("Block", block.toString());
+        }
     }
 }

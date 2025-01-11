@@ -230,13 +230,13 @@ public class RoadrunnerTest extends LinearOpMode {
                 .strafeToConstantHeading(new Vector2d(-36, 38))  // slide
                 .strafeToConstantHeading(new Vector2d(-36, 12))  // go forward
                 .strafeToConstantHeading(new Vector2d(-46, 12))  // slide and drag
-                .strafeToConstantHeading(new Vector2d(-46, 56))
-                .strafeToConstantHeading(new Vector2d(-46, 12))
+                .strafeToConstantHeading(new Vector2d(-46, 56))  // ^
+                .strafeToConstantHeading(new Vector2d(-46, 12))  // ^
                 .strafeToConstantHeading(new Vector2d(-52, 12))  // slide and drag
-                .strafeToConstantHeading(new Vector2d(-52, 56))
-                .strafeToConstantHeading(new Vector2d(-52, 12))
+                .strafeToConstantHeading(new Vector2d(-52, 56))  // ^
+                .strafeToConstantHeading(new Vector2d(-52, 12))  // ^
                 .strafeToConstantHeading(new Vector2d(-60, 12))  // slide and drag
-                .strafeToConstantHeading(new Vector2d(-60, 56));
+                .strafeToConstantHeading(new Vector2d(-60, 56)); // ^
 
 
 
