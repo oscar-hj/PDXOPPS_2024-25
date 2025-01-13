@@ -6,11 +6,13 @@ import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.AccelConstraint;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
+import com.acmerobotics.roadrunner.TrajectoryBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -224,19 +226,21 @@ public class RoadrunnerTest extends LinearOpMode {
 
 
         TrajectoryActionBuilder startGoToRung = drive.actionBuilder(initialPose)
-                .strafeToConstantHeading(new Vector2d(-8, 34));
+                .strafeToConstantHeading(new Vector2d(-2, 34));
+
+
         TrajectoryActionBuilder dragSamples = startGoToRung.endTrajectory().fresh()
-                .strafeToConstantHeading(new Vector2d(-8, 38))   // go back a little
+                .strafeToConstantHeading(new Vector2d(-2, 38))   // go back a little
                 .strafeToConstantHeading(new Vector2d(-36, 38))  // slide
-                .strafeToConstantHeading(new Vector2d(-36, 12))  // go forward
+                .strafeToConstantHeading(new Vector2d(-36, 13))  // go forward
                 .strafeToConstantHeading(new Vector2d(-46, 12))  // slide and drag
                 .strafeToConstantHeading(new Vector2d(-46, 56))  // ^
-                .strafeToConstantHeading(new Vector2d(-46, 12))  // ^
+                .strafeToConstantHeading(new Vector2d(-46, 13))  // ^
                 .strafeToConstantHeading(new Vector2d(-52, 12))  // slide and drag
                 .strafeToConstantHeading(new Vector2d(-52, 56))  // ^
-                .strafeToConstantHeading(new Vector2d(-52, 12))  // ^
-                .strafeToConstantHeading(new Vector2d(-60, 12))  // slide and drag
-                .strafeToConstantHeading(new Vector2d(-60, 56)); // ^
+                .strafeToConstantHeading(new Vector2d(-52, 13))  // ^
+                .strafeToConstantHeading(new Vector2d(-59, 12))  // slide and drag
+                .strafeToConstantHeading(new Vector2d(-59, 56)); // ^
 
 
 
