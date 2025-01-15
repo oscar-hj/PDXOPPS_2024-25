@@ -1,6 +1,4 @@
-package org.firstinspires.ftc.teamcode;
-
-import android.view.DragEvent;
+package org.firstinspires.ftc.teamcode.roadrunner;
 
 import androidx.annotation.NonNull;
 
@@ -43,10 +41,10 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.teamcode.messages.DriveCommandMessage;
-import org.firstinspires.ftc.teamcode.messages.MecanumCommandMessage;
-import org.firstinspires.ftc.teamcode.messages.MecanumLocalizerInputsMessage;
-import org.firstinspires.ftc.teamcode.messages.PoseMessage;
+import org.firstinspires.ftc.teamcode.roadrunner.messages.DriveCommandMessage;
+import org.firstinspires.ftc.teamcode.roadrunner.messages.MecanumCommandMessage;
+import org.firstinspires.ftc.teamcode.roadrunner.messages.MecanumLocalizerInputsMessage;
+import org.firstinspires.ftc.teamcode.roadrunner.messages.PoseMessage;
 
 import java.lang.Math;
 import java.util.Arrays;
@@ -66,18 +64,18 @@ public final class MecanumDrive {
 
         // drive model parameters
         public double inPerTick = 0.0019571629407062;
-        public double lateralInPerTick = 0.0014610927596179159;
-        public double trackWidthTicks = 7712.467432479872;
+        public double lateralInPerTick = 0.0014744078751799871;
+        public double trackWidthTicks = 7581.467432479872;
 
         // feedforward parameters (in tick units)
-        public double kS = 0.8099408936067891;
+        public double kS = 0.8999408936067891;
         public double kV = 0.00038263918395888756;
-        public double kA = 0.00008;
+        public double kA = 0.00005;
 
         // path profile parameters (in inches)
-        public double maxWheelVel = 70;
-        public double minProfileAccel = -25;
-        public double maxProfileAccel = 25;
+        public double maxWheelVel = 50;
+        public double minProfileAccel = -15;
+        public double maxProfileAccel = 15;
 
         // turn profile parameters (in radians)
         public double maxAngVel = Math.PI; // shared with path
@@ -85,10 +83,10 @@ public final class MecanumDrive {
 
         // path controller gains
         public double axialGain = 3;
-        public double lateralGain = 0.5;
-        public double headingGain = 1; // shared with turn
+        public double lateralGain = 2;
+        public double headingGain = 2; // shared with turn
 
-        public double axialVelGain = 0.0;
+        public double axialVelGain = 0.3;
         public double lateralVelGain = 0.0;
         public double headingVelGain = 0.0; // shared with turn
     }

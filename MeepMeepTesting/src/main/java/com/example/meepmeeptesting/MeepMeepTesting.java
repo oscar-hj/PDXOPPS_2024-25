@@ -16,7 +16,21 @@ public class MeepMeepTesting {
                 .build();
 
         robot.runAction(robot.getDrive().actionBuilder(new Pose2d(-13, 64, Math.toRadians(270)))
-                .strafeToConstantHeading(new Vector2d(-8, 34))
+                .waitSeconds(1)
+                .strafeToConstantHeading(new Vector2d(-2, 38))   // go back a little
+                .waitSeconds(1)
+                .strafeToConstantHeading(new Vector2d(-36, 38))  // slide
+                .waitSeconds(1)
+                .strafeToConstantHeading(new Vector2d(-36, 13))  // go forward
+                .waitSeconds(1)
+                .strafeToConstantHeading(new Vector2d(-46, 12))  // slide and drag
+                .strafeToConstantHeading(new Vector2d(-46, 56))  // ^
+                .strafeToConstantHeading(new Vector2d(-46, 13))  // ^
+                .strafeToConstantHeading(new Vector2d(-52, 12))  // slide and drag
+                .strafeToConstantHeading(new Vector2d(-52, 56))  // ^
+                .strafeToConstantHeading(new Vector2d(-52, 13))  // ^
+                .strafeToConstantHeading(new Vector2d(-59, 12))  // slide and drag
+                .strafeToConstantHeading(new Vector2d(-59, 56))
                 .build());
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_INTO_THE_DEEP_OFFICIAL)

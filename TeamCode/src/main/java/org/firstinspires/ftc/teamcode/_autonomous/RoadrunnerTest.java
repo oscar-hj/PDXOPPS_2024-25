@@ -1,18 +1,14 @@
 package org.firstinspires.ftc.teamcode._autonomous;
 
-import android.view.animation.LinearInterpolator;
-
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.AccelConstraint;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
-import com.acmerobotics.roadrunner.TrajectoryBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -23,10 +19,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.MecanumDrive;
-
-import java.net.HttpURLConnection;
-import java.util.concurrent.TimeUnit;
+import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 
 @Config
 @Autonomous(name = "RoadrunnerTest", group = "Autonomous")
@@ -37,87 +30,95 @@ public class RoadrunnerTest extends LinearOpMode {
 
         public Slide(HardwareMap hardwareMap){
             slide = hardwareMap.get(DcMotor.class, "slideMotor");
-            slide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            slide.setTargetPosition(slide.getCurrentPosition());
+            slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            slide.setPower(1);
             slide.setDirection(DcMotorSimple.Direction.FORWARD);
         }
 
-        public class SlideUp implements Action{
+        public class DeploySpecimen implements Action{
             private boolean initialized = false;
             private final ElapsedTime timer = new ElapsedTime();
+
+            int targetPos = slide.getCurrentPosition() + 2800;
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 if (!initialized){
-                    slide.setPower(0.8);
-                    timer.reset();
+                    packet.put("targetPos", targetPos);
+                    slide.setTargetPosition(targetPos);
                     initialized = true;
                 }
 
-                double time = timer.time();
-                packet.put("time", time);
-                if (time < 2){
-                    return true;
-                }else{
-                    slide.setPower(0);
+                telemetry.addData("Target Pos", slide.getTargetPosition());
+                telemetry.addData("Current Pos", slide.getCurrentPosition());
+                telemetry.update();
+                double t = timer.time();
+                packet.put("t", t);
+                if (t < 10){
+                    return slide.isBusy();
+                } else{
                     return false;
                 }
+
             }
         }
-        public Action slideUp(){
-            return new SlideUp();
+        public Action deploySpecimen(){
+            return new Slide.DeploySpecimen();
         }
 
-        public class SlideDown implements Action{
+        public class IdleDown implements Action{
             private boolean initialized = false;
             private final ElapsedTime timer = new ElapsedTime();
+            int targetPos = slide.getCurrentPosition() + 1000;
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 if (!initialized){
-                    slide.setPower(-0.8);
-                    timer.reset();
+                    packet.put("targetPos", targetPos);
+                    slide.setTargetPosition(targetPos);
                     initialized = true;
                 }
 
-                double time = timer.time();
-                packet.put("time", time);
-                if (time < .5){
-                    return true;
-                }else{
-                    slide.setPower(0);
+                double t = timer.time();
+                packet.put("t", t);
+                if (t < 10){
+                    return slide.isBusy();
+                } else{
                     return false;
                 }
+
             }
         }
-        public Action slideDown(){
-            return new SlideDown();
+        public Action idleDown(){
+            return new Slide.IdleDown();
         }
 
-        public class SpecimenSlideDown implements Action{
+        public class SpecimenUp implements Action{
             private boolean initialized = false;
             private final ElapsedTime timer = new ElapsedTime();
+            int targetPos = slide.getCurrentPosition() + 4000;
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 if (!initialized){
-                    sleep(1000);
-                    slide.setPower(-0.8);
-                    timer.reset();
+                    packet.put("targetPos", targetPos);
+                    slide.setTargetPosition(targetPos);
                     initialized = true;
                 }
 
-                double time = timer.time();
-                packet.put("time", time);
-                if (time < 1){
-                    return true;
-                }else{
-                    slide.setPower(0);
+                double t = timer.time();
+                packet.put("t", t);
+                if (t < 10){
+                    return slide.isBusy();
+                } else{
                     return false;
                 }
+
             }
         }
-        public Action specimenSlideDown(){
-            return new SpecimenSlideDown();
+        public Action specimenUp(){
+            return new Slide.SpecimenUp();
         }
     }
 
@@ -153,10 +154,10 @@ public class RoadrunnerTest extends LinearOpMode {
             return new SmallPivotForward();
         }
 
-        public class SmallPivotBackwards implements Action{
+        public class GoToStart implements Action{
             private boolean initialized = false;
             private final ElapsedTime timer = new ElapsedTime();
-            int targetPos = pivotMotor.getCurrentPosition() - 140;
+            int targetPos = pivotMotor.getCurrentPosition();
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
@@ -176,9 +177,36 @@ public class RoadrunnerTest extends LinearOpMode {
 
             }
         }
+        public Action goToStart(){
+            return new GoToStart();
+        }
 
-        public Action smallPivotBackwards(){
-            return new SmallPivotBackwards();
+        public class SpecimenPickup implements Action{
+            private boolean initialized = false;
+            private final ElapsedTime timer = new ElapsedTime();
+            int targetPos = pivotMotor.getCurrentPosition() + 2000;
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                if (!initialized){
+                    packet.put("targetPos", targetPos);
+                    pivotMotor.setTargetPosition(targetPos);
+                    initialized = true;
+                }
+
+                double t = timer.time();
+                packet.put("t", t);
+                if (t < 10){
+                    return pivotMotor.isBusy();
+                } else{
+                    return false;
+                }
+
+            }
+        }
+
+        public Action specimenPickup(){
+            return new SpecimenPickup();
         }
 
     }
@@ -197,6 +225,7 @@ public class RoadrunnerTest extends LinearOpMode {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 clawServo.setPower(-1);
+                sleep(500);
                 return false;
             }
         }
@@ -208,6 +237,7 @@ public class RoadrunnerTest extends LinearOpMode {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 clawServo.setPower(1);
+                sleep(500);
                 return false;
             }
         }
@@ -239,9 +269,9 @@ public class RoadrunnerTest extends LinearOpMode {
                 .strafeToConstantHeading(new Vector2d(-52, 12))  // slide and drag
                 .strafeToConstantHeading(new Vector2d(-52, 56))  // ^
                 .strafeToConstantHeading(new Vector2d(-52, 13))  // ^
-                .strafeToConstantHeading(new Vector2d(-59, 12))  // slide and drag
-                .strafeToConstantHeading(new Vector2d(-59, 56)); // ^
-
+                .strafeToConstantHeading(new Vector2d(-58, 12))  // slide and drag
+                .strafeToConstantHeading(new Vector2d(-58, 56)) // ^
+                .strafeToLinearHeading(new Vector2d(-46, 36), Math.toRadians(90));
 
 
         Action StartGoToRung = startGoToRung.build();
@@ -262,15 +292,15 @@ public class RoadrunnerTest extends LinearOpMode {
                 new SequentialAction(
                         new ParallelAction(
                                 StartGoToRung,
-                                slide.slideUp()
+                                slide.specimenUp()
                         ),
                         new SequentialAction(
                                 pivot.smallPivotForward(),
-                                slide.specimenSlideDown(),
+                                slide.deploySpecimen(),
                                 claw.openClaw(),
-                                pivot.smallPivotBackwards(),
-                                slide.slideDown(),
-                                DragSamples
+                                pivot.goToStart(),
+                                DragSamples,
+                                pivot.specimenPickup()
                         )
                 )
 
