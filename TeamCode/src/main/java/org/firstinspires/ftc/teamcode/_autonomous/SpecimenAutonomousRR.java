@@ -37,7 +37,7 @@ public class SpecimenAutonomousRR extends LinearOpMode {
 
         public class DeploySpecimen implements Action{
             private boolean initialized = false;
-            int targetPos = slide.getCurrentPosition() + 2100;
+            int targetPos = slide.getCurrentPosition() + 1900;
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
@@ -80,7 +80,7 @@ public class SpecimenAutonomousRR extends LinearOpMode {
 
         public class SpecimenUp implements Action{
             private boolean initialized = false;
-            int targetPos = slide.getCurrentPosition() + 4000;
+            int targetPos = slide.getCurrentPosition() + 3500;
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
@@ -195,7 +195,7 @@ public class SpecimenAutonomousRR extends LinearOpMode {
         public class OpenClaw implements Action{
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                clawServo.setPower(-1);
+                clawServo.setPower(0);
                 sleep(500);
                 return false;
             }
@@ -230,7 +230,7 @@ public class SpecimenAutonomousRR extends LinearOpMode {
 
         // go to rung where the robot currently holds a specimen
         TrajectoryActionBuilder hangSamplePos1 = drive.actionBuilder(initialPose)
-                .strafeToConstantHeading(new Vector2d(2, 34));
+                .strafeToConstantHeading(new Vector2d(6, 34));
 
         // routine to drag samples from default space to the observation zone
         // then position itself to get the first specimen
@@ -251,24 +251,24 @@ public class SpecimenAutonomousRR extends LinearOpMode {
 
         // gets the specimen and moves to rung
         TrajectoryActionBuilder hangSample1 = dragSamples.endTrajectory().fresh()
-                .strafeToLinearHeading(new Vector2d(-2, 40), Math.toRadians(270))
-                .strafeToConstantHeading(new Vector2d(0, 33));
+                .strafeToLinearHeading(new Vector2d(4, 40), Math.toRadians(270))
+                .strafeToConstantHeading(new Vector2d(4, 33));
 
 
         // moves to specimen collection location and goes to hang location then parks in the
-        // observation zone TODO: Try locations to see if it works NOT TESTED
+        // observation zone
         TrajectoryActionBuilder collectSpecimen2 = hangSample1.endTrajectory().fresh()
                 .strafeToLinearHeading(new Vector2d(-45, 48), Math.toRadians(90));
 
         TrajectoryActionBuilder hangSpecimen2 = collectSpecimen2.endTrajectory().fresh()
-                .strafeToLinearHeading(new Vector2d(-2, 40), Math.toRadians(270))
-                .strafeToConstantHeading(new Vector2d(0, 33));
+                .strafeToLinearHeading(new Vector2d(2, 40), Math.toRadians(270))
+                .strafeToConstantHeading(new Vector2d(2, 33));
 
         TrajectoryActionBuilder collectSpecimen3 = hangSpecimen2.endTrajectory().fresh()
                 .strafeToLinearHeading(new Vector2d(-45, 48), Math.toRadians(90));
 
         TrajectoryActionBuilder hangSpecimen3 = collectSpecimen3.endTrajectory().fresh()
-                .strafeToLinearHeading(new Vector2d(-2, 40), Math.toRadians(270))
+                .strafeToLinearHeading(new Vector2d(0, 40), Math.toRadians(270))
                 .strafeToConstantHeading(new Vector2d(0, 33));
 
         TrajectoryActionBuilder park = hangSpecimen3.endTrajectory().fresh()
@@ -323,7 +323,6 @@ public class SpecimenAutonomousRR extends LinearOpMode {
                     slide.deploySpecimen(),
                     claw.openClaw(),
                     pivot.goToStart(),
-                    // TODO: Check if it works!!! NOT TESTED
                     // third specimen
                     new ParallelAction(
                             slide.idleDown(),

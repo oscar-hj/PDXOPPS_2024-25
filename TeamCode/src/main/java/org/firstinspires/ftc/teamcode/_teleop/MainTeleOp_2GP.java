@@ -110,7 +110,7 @@ public class MainTeleOp_2GP extends LinearOpMode{
                 if (gp2A){
                     clawServo.setPower(1);
                 } else if (gp2B) {
-                    clawServo.setPower(-1);
+                    clawServo.setPower(0);
                 }
 
                 // rotate claw
@@ -120,13 +120,13 @@ public class MainTeleOp_2GP extends LinearOpMode{
                     pivotServo.setPower(0);
                 }
 
-                // TODO: Husky lens detection and auto rotation
-                if (gp2PS){
-                    autoRotate();
-                }
+                // DELAYED
+                // if (gp2PS){
+                //     autoRotate();
+                // }
 
                 // temp for testing
-                doHusky();
+                // doHusky();
 
                 telemetry.update();
             }
@@ -256,23 +256,23 @@ public class MainTeleOp_2GP extends LinearOpMode{
         getDriveMotorTele();
     }
 
-    public void autoRotate(){
-        HuskyLens.Block[] blockArr = lens.blocks();
-
-        if (blockArr.length >= 2){
-            telemetry.addLine("WARNING: THERE ARE 2 OR MORE SAMPLES DETECTED");
-        }
-    }
-    public void doHusky(){
-        /* Color IDs
-        YELLOW: ??
-        RED: ??
-        BLUE: ??
-        */
-        HuskyLens.Block[] blockArr = lens.blocks();
-
-        for (HuskyLens.Block block : blockArr) {
-            telemetry.addData("Block", block.toString());
-        }
-    }
+//    public void autoRotate(){
+//        HuskyLens.Block[] blockArr = lens.blocks();
+//
+//        if (blockArr.length >= 2){
+//            telemetry.addLine("WARNING: THERE ARE 2 OR MORE SAMPLES DETECTED");
+//        }
+//    }
+//    public void doHusky(){
+//        /* Color IDs
+//        YELLOW: ??
+//        RED: ??
+//        BLUE: ??
+//        */
+//        HuskyLens.Block[] blockArr = lens.blocks();
+//
+//        for (HuskyLens.Block block : blockArr) {
+//            telemetry.addData("Block", block.toString());
+//        }
+//    }
 }
