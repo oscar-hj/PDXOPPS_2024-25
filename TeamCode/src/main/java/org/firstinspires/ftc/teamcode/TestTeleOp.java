@@ -120,16 +120,15 @@ public class TestTeleOp extends LinearOpMode{
                     pivotServo.setPower(0);
                 }
 
-                // TODO: Husky lens detection and auto rotation
-                if (gp2PS){
-                    autoRotate();
-                }
-
-                // temp for testing
-                doHusky();
+                // DELAYED HUSKY LENS
+//                if (gp2PS){
+//                    autoRotate();
+//                }
+//
+//                // temp for testing
+//                doHusky();
 
                 telemetry.addData("pivot pos", pivotMotor.getCurrentPosition());
-
                 telemetry.update();
             }
         }
