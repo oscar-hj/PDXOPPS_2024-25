@@ -17,6 +17,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 
@@ -113,19 +114,25 @@ public class SpecimenAutonomousRR extends LinearOpMode {
 
         public class SmallPivotForward implements Action{
             private boolean initialized = false;
-            int targetPos = pivotMotor.getCurrentPosition() + 140;
+            private final ElapsedTime timer = new ElapsedTime();
+            int targetPos = pivotMotor.getCurrentPosition() + 160;
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 if (!initialized){
+                    timer.reset();
                     packet.put("targetPos", targetPos);
                     pivotMotor.setTargetPosition(targetPos);
                     initialized = true;
                 }
 
-                boolean isBusy = pivotMotor.isBusy();
-                packet.put("isBusy", isBusy);
-                return pivotMotor.isBusy();
+                double time = timer.time();
+                packet.put("time", time);
+                return time < 5;
+
+//                boolean isBusy = pivotMotor.isBusy();
+//                packet.put("isBusy", isBusy);
+//                return pivotMotor.isBusy();
             }
         }
 
