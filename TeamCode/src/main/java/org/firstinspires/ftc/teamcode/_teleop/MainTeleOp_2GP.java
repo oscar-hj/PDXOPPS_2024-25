@@ -18,7 +18,7 @@ public class MainTeleOp_2GP extends LinearOpMode{
     CRServo clawServo, pivotServo;
     DistanceSensor distanceSensor;
     HuskyLens lens;
-    int pivotPos;
+    int pivotPos, specimenPickupPos;
     double gp1LSX, gp1LSY, gp1RSX, gp1RSY, gp1LT, gp1RT, gp2LSY, gp2RSY, gp2LT, gp2RT, gp2LSX, gp2RSX;
     boolean gp1LB, gp1RB, gp2DPadUp, gp2DPadDown, gp2DPadLeft, gp2DPadRight, gp2PS, gp2A, gp2B, gp2LB, gp2RB;
     double motorSpeedgp1, motorSpeedgp2, dis, slowSpeed = 0.1, normSpeed = 0.5, boostSpeed = 1, deadzone = 0.05;
@@ -30,6 +30,7 @@ public class MainTeleOp_2GP extends LinearOpMode{
 
         if(opModeIsActive()){
             pivotPos = pivotMotor.getCurrentPosition();
+            specimenPickupPos = pivotMotor.getCurrentPosition() + 1300;
             pivotMotor.setTargetPosition(pivotPos);
             while(opModeIsActive()) {
                 //reads the game-pad inputs and assigns them to variables
@@ -54,6 +55,15 @@ public class MainTeleOp_2GP extends LinearOpMode{
                     stopDriveMotors();
                 }
 
+                // rotate hooks
+                if (gp1LT > deadzone){
+                    hookMotor.setPower(gp1LT * motorSpeedgp1);
+                } else if (gp1RT > deadzone){
+                    hookMotor.setPower(-gp1RT * motorSpeedgp1);
+                } else{
+                    hookMotor.setPower(0);
+                }
+
 
                 //GAMEPAD 2 CONTROL
                 // sets speed
@@ -74,17 +84,9 @@ public class MainTeleOp_2GP extends LinearOpMode{
                     lockPivotMotor(pivotPos);
                 }
 
-                // auto position slide
+                // auto position slide (HOLD)
                 if (gp2PS){
-                    dis = distanceSensor.getDistance(DistanceUnit.INCH);
-
-                    if (dis > 5.5){
-                        pivotPos = drivePivotMotor(0.3, motorSpeedgp2);
-                    }else if (dis < 5){
-                        pivotPos = drivePivotMotor(-0.3, motorSpeedgp2);
-                    }else{
-                        lockPivotMotor(pivotPos);
-                    }
+                    lockPivotMotor(specimenPickupPos);
                 }
 
                 // slide
@@ -99,18 +101,11 @@ public class MainTeleOp_2GP extends LinearOpMode{
                     slideMotor.setPower(0);
                 }
 
-                // move hooks
-                if(abs(gp2LSY) > deadzone){
-                    hookMotor.setPower(gp2LSY * motorSpeedgp2);
-                } else {
-                    hookMotor.setPower(0);
-                }
-
                 // open/close claw
                 if (gp2A){
                     clawServo.setPower(1);
                 } else if (gp2B) {
-                    clawServo.setPower(0);
+                    clawServo.setPower(-0.5);
                 }
 
                 // rotate claw
@@ -120,13 +115,14 @@ public class MainTeleOp_2GP extends LinearOpMode{
                     pivotServo.setPower(0);
                 }
 
-                // DELAYED
-                // if (gp2PS){
-                //     autoRotate();
-                // }
+                /*
+                 HUSKY LENS DELAYED
+                 if (gp2PS){
+                     autoRotate();
+                 }
 
-                // temp for testing
-                // doHusky();
+                 doHusky();
+                */
 
                 telemetry.update();
             }
