@@ -7,21 +7,18 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 @TeleOp(name = "MainTeleOp_2GP")
 public class MainTeleOp_2GP extends LinearOpMode{
     DcMotor frontLeftMotor, frontRightMotor, backLeftMotor, backRightMotor;
     DcMotor pivotMotor, slideMotor, hookMotor;
     CRServo clawServo, pivotServo;
-    DistanceSensor distanceSensor;
     HuskyLens lens;
     int pivotPos, specimenPickupPos;
     double gp1LSX, gp1LSY, gp1RSX, gp1RSY, gp1LT, gp1RT, gp2LSY, gp2RSY, gp2LT, gp2RT, gp2LSX, gp2RSX;
     boolean gp1LB, gp1RB, gp2DPadUp, gp2DPadDown, gp2DPadLeft, gp2DPadRight, gp2PS, gp2A, gp2B, gp2LB, gp2RB;
-    double motorSpeedgp1, motorSpeedgp2, dis, slowSpeed = 0.1, normSpeed = 0.5, boostSpeed = 1, deadzone = 0.05;
+    double motorSpeedgp1, motorSpeedgp2, slowSpeed = 0.1, normSpeed = 0.5, boostSpeed = 1, deadzone = 0.05;
 
     @Override
     public void runOpMode() {
@@ -214,7 +211,6 @@ public class MainTeleOp_2GP extends LinearOpMode{
 
         clawServo = hardwareMap.get(CRServo.class, "clawServo");
         pivotServo = hardwareMap.get(CRServo.class, "pivotServo");
-        distanceSensor = hardwareMap.get(DistanceSensor.class, "distanceSensor");
 
         lens = hardwareMap.get(HuskyLens.class, "lens");
         lens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
@@ -252,23 +248,25 @@ public class MainTeleOp_2GP extends LinearOpMode{
         getDriveMotorTele();
     }
 
-//    public void autoRotate(){
-//        HuskyLens.Block[] blockArr = lens.blocks();
-//
-//        if (blockArr.length >= 2){
-//            telemetry.addLine("WARNING: THERE ARE 2 OR MORE SAMPLES DETECTED");
-//        }
-//    }
-//    public void doHusky(){
-//        /* Color IDs
-//        YELLOW: ??
-//        RED: ??
-//        BLUE: ??
-//        */
-//        HuskyLens.Block[] blockArr = lens.blocks();
-//
-//        for (HuskyLens.Block block : blockArr) {
-//            telemetry.addData("Block", block.toString());
-//        }
-//    }
+/*
+    public void autoRotate(){
+        HuskyLens.Block[] blockArr = lens.blocks();
+
+        if (blockArr.length >= 2){
+            telemetry.addLine("WARNING: THERE ARE 2 OR MORE SAMPLES DETECTED");
+        }
+    }
+    public void doHusky(){
+        /* Color IDs
+        YELLOW: ??
+        RED: ??
+        BLUE: ??
+        * /
+        HuskyLens.Block[] blockArr = lens.blocks();
+
+        for (HuskyLens.Block block : blockArr) {
+            telemetry.addData("Block", block.toString());
+        }
+    }
+*/
 }
