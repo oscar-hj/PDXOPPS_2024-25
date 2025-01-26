@@ -61,14 +61,14 @@ public final class MecanumDrive {
                 RevHubOrientationOnRobot.UsbFacingDirection.RIGHT;
 
         // drive model parameters
-        public double inPerTick = 0.0019571629407062;
-        public double lateralInPerTick = 0.0014744078751799871;
-        public double trackWidthTicks = 7581.467432479872;
+        public double inPerTick = 0.00204237715318697745563261545949;
+        public double lateralInPerTick = 0.0015709589922730637;
+        public double trackWidthTicks = 7548.467432479872;
 
         // feedforward parameters (in tick units)
-        public double kS = 0.8999408936067891;
-        public double kV = 0.00038263918395888756;
-        public double kA = 0.00005;
+        public double kS = 1.0042911012173668;
+        public double kV = 0.0003831745556066976;
+        public double kA = 0.00006;
 
         // path profile parameters (in inches)
         public double maxWheelVel = 50;
@@ -283,6 +283,15 @@ public final class MecanumDrive {
                 t = Actions.now() - beginTs;
             }
 
+            Pose2dDual<Time> txWorldTarget = timeTrajectory.get(t);
+            targetPoseWriter.write(new PoseMessage(txWorldTarget.value()));
+
+            PoseVelocity2d robotVelRobot = updatePoseEstimate();
+
+            Pose2d error = txWorldTarget.value().minusExp(pose);
+
+            // add ( && error.position.norm() < 0.2 || t >= timeTrajectory.duration + 2) for extra
+            // correction
             if (t >= timeTrajectory.duration) {
                 leftFront.setPower(0);
                 leftBack.setPower(0);
@@ -292,10 +301,6 @@ public final class MecanumDrive {
                 return false;
             }
 
-            Pose2dDual<Time> txWorldTarget = timeTrajectory.get(t);
-            targetPoseWriter.write(new PoseMessage(txWorldTarget.value()));
-
-            PoseVelocity2d robotVelRobot = updatePoseEstimate();
 
             PoseVelocity2dDual<Time> command = new HolonomicController(
                     PARAMS.axialGain, PARAMS.lateralGain, PARAMS.headingGain,
@@ -326,7 +331,6 @@ public final class MecanumDrive {
             p.put("y", pose.position.y);
             p.put("heading (deg)", Math.toDegrees(pose.heading.toDouble()));
 
-            Pose2d error = txWorldTarget.value().minusExp(pose);
             p.put("xError", error.position.x);
             p.put("yError", error.position.y);
             p.put("headingError (deg)", Math.toDegrees(error.heading.toDouble()));

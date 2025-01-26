@@ -4,11 +4,13 @@ import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.AccelConstraint;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.AngularVelConstraint;
 import com.acmerobotics.roadrunner.MinVelConstraint;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.ProfileAccelConstraint;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.TranslationalVelConstraint;
@@ -29,7 +31,7 @@ import java.util.Arrays;
 
 
 @Config
-@Autonomous(name = "RoadrunnerTest", group = "Autonomous")
+@Autonomous(name = "SpecimenAutonomousRR", group = "Autonomous")
 public class SpecimenAutonomousRR extends LinearOpMode {
     // slide class
     public class Slide {
@@ -44,7 +46,7 @@ public class SpecimenAutonomousRR extends LinearOpMode {
 
         public class DeploySpecimen implements Action{
             private boolean initialized = false;
-            int targetPos = slide.getCurrentPosition() + 1900;
+            int targetPos = slide.getCurrentPosition() + 1850;
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
@@ -121,7 +123,7 @@ public class SpecimenAutonomousRR extends LinearOpMode {
         public class SmallPivotForward implements Action{
             private boolean initialized = false;
             private final ElapsedTime timer = new ElapsedTime();
-            int targetPos = pivotMotor.getCurrentPosition() + 160;
+            int targetPos = pivotMotor.getCurrentPosition() + 130;
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
@@ -169,20 +171,27 @@ public class SpecimenAutonomousRR extends LinearOpMode {
 
         public class SpecimenPickup implements Action{
             private boolean initialized = false;
+            private final ElapsedTime timer = new ElapsedTime();
             int targetPos = pivotMotor.getCurrentPosition() + 1300;
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 if (!initialized){
+                    timer.reset();
                     packet.put("targetPos", targetPos);
                     pivotMotor.setTargetPosition(targetPos);
                     initialized = true;
                     sleep(1000);
                 }
 
-                boolean isBusy = pivotMotor.isBusy();
-                packet.put("isBusy", isBusy);
-                return isBusy;
+
+                double time = timer.time();
+
+                return time > 5;
+
+//                boolean isBusy = pivotMotor.isBusy();
+//                packet.put("isBusy", isBusy);
+//                return isBusy;
 
             }
         }
@@ -202,13 +211,16 @@ public class SpecimenAutonomousRR extends LinearOpMode {
 
         public Claw(HardwareMap hardwareMap){
             clawServo = hardwareMap.get(CRServo.class, "clawServo");
-            //pivotServo = hardwareMap.get(CRServo.class, "pivotServo");
+
+            // locks the rotation servo in place
+            CRServo rotationServo = hardwareMap.get(CRServo.class, "pivotServo");
+            rotationServo.setPower(0);
         }
 
         public class OpenClaw implements Action{
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                clawServo.setPower(0);
+                clawServo.setPower(-0.5);
                 sleep(500);
                 return false;
             }
@@ -221,9 +233,10 @@ public class SpecimenAutonomousRR extends LinearOpMode {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 clawServo.setPower(1);
-                sleep(500);
+                sleep(750);
                 return false;
             }
+
         }
         public Action closeClaw(){
             return new CloseClaw();
@@ -241,63 +254,65 @@ public class SpecimenAutonomousRR extends LinearOpMode {
         Slide slide = new Slide(hardwareMap);
         Pivot pivot = new Pivot(hardwareMap);
 
-        // TODO: Test velocity constraints
-        // velocity constraints for fast movements and accurate movements
-        VelConstraint accurateSpeed = new MinVelConstraint(Arrays.asList(
+        // TODO: Test velocity and acceleration constraints
+        // velocity and acceleration constraints for fast movements and accurate movements
+        VelConstraint accurateVel = new MinVelConstraint(Arrays.asList(
                 new TranslationalVelConstraint(40),
                 new AngularVelConstraint(Math.PI / 3)
         ));
+        AccelConstraint accurateAccel = new ProfileAccelConstraint(-15, 15);
 
-        VelConstraint fastSpeed = new MinVelConstraint(Arrays.asList(
+        VelConstraint fastVel = new MinVelConstraint(Arrays.asList(
                 new TranslationalVelConstraint(80),
                 new AngularVelConstraint(Math.PI)
         ));
+        AccelConstraint fastAccel = new ProfileAccelConstraint(-30, 30);
 
         // go to rung where the robot currently holds a specimen
         TrajectoryActionBuilder hangSamplePos1 = drive.actionBuilder(initialPose)
-                .strafeToConstantHeading(new Vector2d(6, 34));
+                .strafeToConstantHeading(new Vector2d(6, 33));
 
         // routine to drag samples from default space to the observation zone
         // then position itself to get the first specimen
         TrajectoryActionBuilder dragSamples = hangSamplePos1.endTrajectory().fresh()
-                .strafeToConstantHeading(new Vector2d(-2, 38), fastSpeed)   // go back a little
-                .strafeToConstantHeading(new Vector2d(-36, 38), fastSpeed)  // slide
-                .strafeToConstantHeading(new Vector2d(-36, 13), fastSpeed)  // go forward
-                .strafeToConstantHeading(new Vector2d(-46, 12), fastSpeed)  // slide and drag
-                .strafeToConstantHeading(new Vector2d(-46, 56), fastSpeed)  // ^
-                .strafeToConstantHeading(new Vector2d(-46, 13), fastSpeed)  // ^
-                .strafeToConstantHeading(new Vector2d(-52, 12), fastSpeed)  // slide and drag
-                .strafeToConstantHeading(new Vector2d(-52, 56), fastSpeed)  // ^
-                .strafeToConstantHeading(new Vector2d(-52, 13), fastSpeed)  // ^
-                .strafeToConstantHeading(new Vector2d(-58, 12), fastSpeed)  // slide and drag
-                .strafeToConstantHeading(new Vector2d(-58, 56), fastSpeed)  // ^
-                .strafeToConstantHeading(new Vector2d(-58, 48), fastSpeed)  // move out of way and position to get specimen
-                .strafeToLinearHeading(new Vector2d(-45, 48), Math.toRadians(90), accurateSpeed);
+                .strafeToConstantHeading(new Vector2d(-2, 38), fastVel, fastAccel)   // go back a little
+                .strafeToConstantHeading(new Vector2d(-36, 38), fastVel, fastAccel)  // slide
+                .strafeToConstantHeading(new Vector2d(-36, 13), fastVel, fastAccel)  // go forward
+                .strafeToConstantHeading(new Vector2d(-46, 12), fastVel, fastAccel)  // slide and drag
+                .strafeToConstantHeading(new Vector2d(-46, 56), fastVel, fastAccel)  // ^
+                .strafeToConstantHeading(new Vector2d(-46, 13), fastVel, fastAccel)  // ^
+                .strafeToConstantHeading(new Vector2d(-52, 12), fastVel, fastAccel)  // slide and drag
+                .strafeToConstantHeading(new Vector2d(-52, 56), fastVel, fastAccel)  // ^
+                .strafeToConstantHeading(new Vector2d(-52, 13), fastVel, fastAccel)  // ^
+                .strafeToConstantHeading(new Vector2d(-61, 12), fastVel, fastAccel)  // slide and drag
+                .strafeToConstantHeading(new Vector2d(-61, 56), fastVel, fastAccel)  // ^
+                .strafeToConstantHeading(new Vector2d(-61, 48), fastVel, fastAccel)  // move out of way and position to get specimen
+                .strafeToSplineHeading(new Vector2d(-46, 48), Math.toRadians(90));
 
         // gets the specimen and moves to rung
         TrajectoryActionBuilder hangSample1 = dragSamples.endTrajectory().fresh()
-                .strafeToLinearHeading(new Vector2d(4, 40), Math.toRadians(270), fastSpeed)
-                .strafeToConstantHeading(new Vector2d(4, 33), accurateSpeed);
+                .strafeToLinearHeading(new Vector2d(4, 40), Math.toRadians(270), fastVel, fastAccel)
+                .strafeToConstantHeading(new Vector2d(4, 33), accurateVel);
 
 
-        // moves to specimen collection location and goes to hang location then parks in the
+        // moves to observation zone and goes to hang location then parks in the
         // observation zone
         TrajectoryActionBuilder collectSpecimen2 = hangSample1.endTrajectory().fresh()
-                .strafeToLinearHeading(new Vector2d(-45, 48), Math.toRadians(90), accurateSpeed);
+                .strafeToLinearHeading(new Vector2d(-46.5, 48), Math.toRadians(90), accurateVel);
 
         TrajectoryActionBuilder hangSpecimen2 = collectSpecimen2.endTrajectory().fresh()
-                .strafeToLinearHeading(new Vector2d(2, 40), Math.toRadians(270), fastSpeed)
-                .strafeToConstantHeading(new Vector2d(2, 33), accurateSpeed);
+                .strafeToLinearHeading(new Vector2d(2, 40), Math.toRadians(270), fastVel, fastAccel)
+                .strafeToConstantHeading(new Vector2d(2, 33), accurateVel);
 
         TrajectoryActionBuilder collectSpecimen3 = hangSpecimen2.endTrajectory().fresh()
-                .strafeToLinearHeading(new Vector2d(-45, 48), Math.toRadians(90), accurateSpeed);
+                .strafeToLinearHeading(new Vector2d(-46.5, 48), Math.toRadians(90), accurateVel);
 
         TrajectoryActionBuilder hangSpecimen3 = collectSpecimen3.endTrajectory().fresh()
-                .strafeToLinearHeading(new Vector2d(0, 40), Math.toRadians(270), fastSpeed)
-                .strafeToConstantHeading(new Vector2d(0, 33), accurateSpeed);
+                .strafeToLinearHeading(new Vector2d(0, 40), Math.toRadians(270), fastVel, fastAccel)
+                .strafeToConstantHeading(new Vector2d(0, 33), accurateVel);
 
         TrajectoryActionBuilder park = hangSpecimen3.endTrajectory().fresh()
-                .strafeToConstantHeading(new Vector2d(-45, 60), fastSpeed);
+                .strafeToConstantHeading(new Vector2d(-50, 60), fastVel, fastAccel);
 
         // closes claw to grab starting specimen
         Actions.runBlocking(claw.closeClaw());
