@@ -128,6 +128,7 @@ public class TestTeleOp extends LinearOpMode{
 //                // temp for testing
 //                doHusky();
 
+                telemetry.addData("Slide pos:", slideMotor.getCurrentPosition());
                 telemetry.addData("pivot pos", pivotMotor.getCurrentPosition());
                 telemetry.update();
             }

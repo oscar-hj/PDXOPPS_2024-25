@@ -31,8 +31,8 @@ import java.util.Arrays;
 
 
 @Config
-@Autonomous(name = "SpecimenAutonomousRR", group = "Autonomous")
-public class SpecimenAutonomousRR extends LinearOpMode {
+@Autonomous(name = "SampleAutonomousRR", group = "Autonomous")
+public class SampleAutonomousRR extends LinearOpMode {
     // slide class
     public class Slide {
         private final DcMotor slide;
@@ -46,7 +46,7 @@ public class SpecimenAutonomousRR extends LinearOpMode {
 
         public class DeploySpecimen implements Action{
             private boolean initialized = false;
-            int targetPos = slide.getCurrentPosition() + 2000;
+            int targetPos = slide.getCurrentPosition() + 1800;
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
@@ -63,7 +63,7 @@ public class SpecimenAutonomousRR extends LinearOpMode {
             }
         }
         public Action deploySpecimen(){
-            return new Slide.DeploySpecimen();
+            return new DeploySpecimen();
         }
 
         public class IdleDown implements Action{
@@ -84,7 +84,28 @@ public class SpecimenAutonomousRR extends LinearOpMode {
             }
         }
         public Action idleDown(){
-            return new Slide.IdleDown();
+            return new IdleDown();
+        }
+
+        public class ParkDown implements Action{
+            private boolean initialized = false;
+            int targetPos = slide.getCurrentPosition() + 2000;
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                if (!initialized){
+                    packet.put("targetPos", targetPos);
+                    slide.setTargetPosition(targetPos);
+                    initialized = true;
+                }
+
+                boolean isBusy = slide.isBusy();
+                packet.put("isBusy", isBusy);
+                return slide.isBusy();
+            }
+        }
+        public Action parkDown(){
+            return new ParkDown();
         }
 
         public class SpecimenUp implements Action{
@@ -105,7 +126,29 @@ public class SpecimenAutonomousRR extends LinearOpMode {
             }
         }
         public Action specimenUp(){
-            return new Slide.SpecimenUp();
+            return new SpecimenUp();
+        }
+
+        public class BasketSample implements Action{
+            private boolean initialized = false;
+            int targetPos = slide.getCurrentPosition() + 9400;
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                if (!initialized){
+                    packet.put("targetPos", targetPos);
+                    slide.setTargetPosition(targetPos);
+                    initialized = true;
+                }
+
+                boolean isBusy = slide.isBusy();
+                packet.put("isBusy", isBusy);
+                return slide.isBusy();
+            }
+        }
+
+        public Action basketSample(){
+            return new BasketSample();
         }
     }
 
@@ -123,7 +166,7 @@ public class SpecimenAutonomousRR extends LinearOpMode {
         public class SmallPivotForward implements Action{
             private boolean initialized = false;
             private final ElapsedTime timer = new ElapsedTime();
-            int targetPos = pivotMotor.getCurrentPosition() + 130;
+            int targetPos = pivotMotor.getCurrentPosition() + 150;
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
@@ -132,6 +175,7 @@ public class SpecimenAutonomousRR extends LinearOpMode {
                     packet.put("targetPos", targetPos);
                     pivotMotor.setTargetPosition(targetPos);
                     initialized = true;
+                    sleep(500);
                 }
 
 //                double time = timer.time();
@@ -146,6 +190,36 @@ public class SpecimenAutonomousRR extends LinearOpMode {
 
         public Action smallPivotForward(){
             return new SmallPivotForward();
+        }
+
+
+        public class BasketPivot implements Action{
+            private boolean initialized = false;
+            private final ElapsedTime timer = new ElapsedTime();
+            int targetPos = pivotMotor.getCurrentPosition() + 240;
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                if (!initialized){
+                    timer.reset();
+                    packet.put("targetPos", targetPos);
+                    pivotMotor.setTargetPosition(targetPos);
+                    initialized = true;
+                    sleep(500);
+                }
+
+//                double time = timer.time();
+//                packet.put("time", time);
+//                return time < 5;
+
+                boolean isBusy = pivotMotor.isBusy();
+                packet.put("isBusy", isBusy);
+                return pivotMotor.isBusy();
+            }
+        }
+
+        public Action basketPivot(){
+            return new BasketPivot();
         }
 
         public class GoToStart implements Action{
@@ -185,13 +259,13 @@ public class SpecimenAutonomousRR extends LinearOpMode {
                 }
 
 
-                double time = timer.time();
+//                double time = timer.time();
+//
+//                return time > 5;
 
-                return time > 5;
-
-//                boolean isBusy = pivotMotor.isBusy();
-//                packet.put("isBusy", isBusy);
-//                return isBusy;
+                boolean isBusy = pivotMotor.isBusy();
+                packet.put("isBusy", isBusy);
+                return isBusy;
 
             }
         }
@@ -246,7 +320,7 @@ public class SpecimenAutonomousRR extends LinearOpMode {
     @Override
     public void runOpMode(){
         // initial pose on map (specimen)
-        Pose2d initialPose = new Pose2d(-13, 64, Math.toRadians(270));
+        Pose2d initialPose = new Pose2d(13, 64, Math.toRadians(270));
 
         // initialize movement and attachments
         MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
@@ -267,65 +341,47 @@ public class SpecimenAutonomousRR extends LinearOpMode {
         ));
         AccelConstraint fastAccel = new ProfileAccelConstraint(-45, 45);
 
+
         // go to rung where the robot currently holds a specimen
-        TrajectoryActionBuilder hangSamplePos1 = drive.actionBuilder(initialPose)
-                .strafeToConstantHeading(new Vector2d(9, 32));
+        TrajectoryActionBuilder hangSample = drive.actionBuilder(initialPose)
+                .strafeToConstantHeading(new Vector2d(10, 32));
 
-        // routine to drag samples from default space to the observation zone
-        // then position itself to get the first specimen
-        TrajectoryActionBuilder dragSamples = hangSamplePos1.endTrajectory().fresh()
-//                .strafeToConstantHeading(new Vector2d(-2, 38), fastVel, fastAccel)   // go back a little
-                .strafeToConstantHeading(new Vector2d(-36, 42), fastVel, fastAccel)  // slide
-                .strafeToConstantHeading(new Vector2d(-36, 13), fastVel, fastAccel)  // go forward
-                .strafeToConstantHeading(new Vector2d(-46, 12), fastVel, fastAccel)  // slide and drag
-                .strafeToConstantHeading(new Vector2d(-46, 56), fastVel, fastAccel)  // ^
-                .strafeToConstantHeading(new Vector2d(-46, 13), fastVel, fastAccel)  // ^
-                .strafeToConstantHeading(new Vector2d(-52, 12), fastVel, fastAccel)  // slide and drag
-                .strafeToConstantHeading(new Vector2d(-52, 56), fastVel, fastAccel)  // ^
-//                .strafeToConstantHeading(new Vector2d(-52, 13), fastVel, fastAccel)  // ^
-//                .strafeToConstantHeading(new Vector2d(-61, 12), fastVel, fastAccel)  // slide and drag
-//                .strafeToConstantHeading(new Vector2d(-61, 56), fastVel, fastAccel)  // ^
-//                .strafeToConstantHeading(new Vector2d(-61, 48), fastVel, fastAccel)  // move out of way and position to get specimen
-                .strafeToConstantHeading(new Vector2d(-52, 45), fastVel, fastAccel)  // move out of way and position to get specimen
-                .strafeToSplineHeading(new Vector2d(-47, 48), Math.toRadians(90), accurateVel);
+        TrajectoryActionBuilder gotoSample1 = hangSample.endTrajectory().fresh()
+                .strafeToConstantHeading(new Vector2d(50, 40), fastVel, fastAccel);
 
-        // gets the specimen and moves to rung
-        TrajectoryActionBuilder hangSample1 = dragSamples.endTrajectory().fresh()
-                .strafeToSplineHeading(new Vector2d(6, 40), Math.toRadians(270), fastVel, fastAccel)
-                .strafeToConstantHeading(new Vector2d(6, 32), accurateVel);
+        TrajectoryActionBuilder gotoBasket1 = gotoSample1.endTrajectory().fresh()
+                .strafeToLinearHeading(new Vector2d(56, 56), Math.toRadians(45), fastVel, fastAccel);
+
+        TrajectoryActionBuilder gotoSample2 = gotoBasket1.endTrajectory().fresh()
+                .strafeToLinearHeading(new Vector2d(61, 40), Math.toRadians(270));
+
+        TrajectoryActionBuilder gotoBasket2 = gotoSample2.endTrajectory().fresh()
+                .strafeToLinearHeading(new Vector2d(56, 56), Math.toRadians(45));
+
+        TrajectoryActionBuilder park = gotoBasket2.endTrajectory().fresh()
+                .strafeToLinearHeading(new Vector2d(36, 6), Math.toRadians(180), fastVel, fastAccel);
+
+        TrajectoryActionBuilder parkTouch = park.endTrajectory().fresh()
+                .strafeToConstantHeading(new Vector2d(30, 6), fastVel, fastAccel);
+//        TrajectoryActionBuilder gotoSample3 = gotoBasket2.endTrajectory().fresh()
+//                .
 
 
-        // moves to observation zone and goes to hang location then parks in the
-        // observation zone
-        TrajectoryActionBuilder collectSpecimen2 = hangSample1.endTrajectory().fresh()
-                .strafeToSplineHeading(new Vector2d(-47.5, 48), Math.toRadians(90), accurateVel);
 
-        TrajectoryActionBuilder hangSpecimen2 = collectSpecimen2.endTrajectory().fresh()
-                .strafeToSplineHeading(new Vector2d(3, 40), Math.toRadians(270), fastVel, fastAccel)
-                .strafeToConstantHeading(new Vector2d(3, 32), accurateVel);
 
-        TrajectoryActionBuilder collectSpecimen3 = hangSpecimen2.endTrajectory().fresh()
-                .strafeToSplineHeading(new Vector2d(-47.5, 48), Math.toRadians(90), accurateVel);
-
-        TrajectoryActionBuilder hangSpecimen3 = collectSpecimen3.endTrajectory().fresh()
-                .strafeToSplineHeading(new Vector2d(0, 40), Math.toRadians(270), fastVel, fastAccel)
-                .strafeToConstantHeading(new Vector2d(0, 32), accurateVel);
-
-        TrajectoryActionBuilder park = hangSpecimen3.endTrajectory().fresh()
-                .strafeToConstantHeading(new Vector2d(-50, 60), fastVel, fastAccel);
 
         // closes claw to grab starting specimen
         Actions.runBlocking(claw.closeClaw());
 
         // builds trajectories beforehand
-        Action HangSamplePos1 = hangSamplePos1.build();
-        Action DragSamples = dragSamples.build();
-        Action HangSamplePos2 = hangSample1.build();
-        Action CollectSpecimenPos3 = collectSpecimen2.build();
-        Action HangSamplePos3 = hangSpecimen2.build();
-        Action CollectSpecimenPos4 = collectSpecimen3.build();
-        Action HangSamplePos4 = hangSpecimen3.build();
+        Action HangSamplePos1 = hangSample.build();
+        Action GoToSample1 = gotoSample1.build();
+        Action GoToBasket1 = gotoBasket1.build();
+        Action GoToSample2 = gotoSample2.build();
+        Action GoToBasket2 = gotoBasket2.build();
         Action Park = park.build();
+        Action TouchPark = parkTouch.build();
+
 
         while (!isStopRequested() && !opModeIsActive()){
             telemetry.addData("Ready", true);
@@ -334,6 +390,7 @@ public class SpecimenAutonomousRR extends LinearOpMode {
 
         waitForStart();
         if (isStopRequested()) return;
+
 
 
         Actions.runBlocking(
@@ -348,54 +405,41 @@ public class SpecimenAutonomousRR extends LinearOpMode {
                     claw.openClaw(),
                     new ParallelAction(
                             pivot.goToStart(),
-                            slide.idleDown(),
-                            DragSamples
+                            slide.idleDown()
                     ),
-                    // second specimen
+                    GoToSample1,
                     pivot.specimenPickup(),
                     claw.closeClaw(),
-                    pivot.goToStart(),
                     new ParallelAction(
-                            slide.specimenUp(),
-                            HangSamplePos2
+                            GoToBasket1,
+                            pivot.goToStart(),
+                            slide.basketSample()
                     ),
-                    pivot.smallPivotForward(),
-                    slide.deploySpecimen(),
+                    pivot.basketPivot(),
                     claw.openClaw(),
                     pivot.goToStart(),
-                    // third specimen
-//                    new ParallelAction(
-//                            slide.idleDown(),
-//                            CollectSpecimenPos3
-//                    ),
-//                    pivot.specimenPickup(),
-//                    claw.closeClaw(),
-//                    pivot.goToStart(),
-//                    new ParallelAction(
-//                            slide.specimenUp(),
-//                            HangSamplePos3
-//                    ),
-//                    pivot.smallPivotForward(),
-//                    slide.deploySpecimen(),
-//                    claw.openClaw(),
-//                    pivot.goToStart(),
-//                    // fourth specimen
-//                    new ParallelAction(
-//                            slide.idleDown(),
-//                            CollectSpecimenPos4
-//                    ),
-//                    pivot.specimenPickup(),
-//                    claw.closeClaw(),
-//                    pivot.goToStart(),
-//                    new ParallelAction(
-//                            slide.specimenUp(),
-//                            HangSamplePos4
-//                    ),
-//                    pivot.smallPivotForward(),
-//                    slide.deploySpecimen(),
-//                    claw.openClaw(),
-//                    pivot.goToStart(),
-                    Park
+                    new ParallelAction(
+                            slide.idleDown(),
+                            GoToSample2
+                    ),
+                    pivot.specimenPickup(),
+                    claw.closeClaw(),
+                    new ParallelAction(
+                            GoToBasket2,
+                            pivot.goToStart(),
+                            slide.basketSample()
+                    ),
+                    pivot.basketPivot(),
+                    claw.openClaw(),
+                    pivot.goToStart(),
+                    new ParallelAction(
+                        slide.parkDown(),
+                        Park
+                    ),
+                    new ParallelAction(
+                            pivot.smallPivotForward(),
+                            TouchPark
+                    )
             )
 
         );

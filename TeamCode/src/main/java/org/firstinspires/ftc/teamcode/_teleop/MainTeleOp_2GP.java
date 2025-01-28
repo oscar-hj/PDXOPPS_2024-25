@@ -102,7 +102,7 @@ public class MainTeleOp_2GP extends LinearOpMode{
                 if (gp2A){
                     clawServo.setPower(1);
                 } else if (gp2B) {
-                    clawServo.setPower(-0.5);
+                    clawServo.setPower(-1);
                 }
 
                 // rotate claw
