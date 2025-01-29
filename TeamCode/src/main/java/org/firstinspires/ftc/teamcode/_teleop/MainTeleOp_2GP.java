@@ -30,7 +30,7 @@ public class MainTeleOp_2GP extends LinearOpMode{
             specimenPickupPos = pivotMotor.getCurrentPosition() + 1300;
             pivotMotor.setTargetPosition(pivotPos);
             while(opModeIsActive()) {
-                //reads the game-pad inputs and assigns them to variables
+                //reads the gamepad inputs and assigns them to variables
                 readGP1();
                 readGP2();
 
@@ -83,7 +83,8 @@ public class MainTeleOp_2GP extends LinearOpMode{
 
                 // auto position slide (HOLD)
                 if (gp2PS){
-                    lockPivotMotor(specimenPickupPos);
+                    pivotPos = specimenPickupPos;
+                    lockPivotMotor(pivotPos);
                 }
 
                 // slide
@@ -139,7 +140,10 @@ public class MainTeleOp_2GP extends LinearOpMode{
         Right Stick X: Rotation
 
         Left Bumper: Slow Mode
-        Right Bumper: Turbo MOde
+        Right Bumper: Turbo Mode
+
+        Left Trigger: Pivot Hooks away
+        Right Trigger: Pivot Hooks towards
          */
         gp1LSX = gamepad1.left_stick_x;
         gp1LSY = gamepad1.left_stick_y;
@@ -156,7 +160,20 @@ public class MainTeleOp_2GP extends LinearOpMode{
 
     public void readGP2(){
         /*
+        Left Bumper: Slow Mode
+        Right Bumper: Turbo Mode
 
+        Left Trigger: Pivot Slide Down
+        Right Trigger: Pivot Slide Up
+        PS: Auto pivot slide to specimen height
+
+        D-Pad Up: Slide Up
+        D-Pad Down: Slide Down
+
+        A (Left Button): Open Claw
+        B (Bottom Button): Close Claw
+
+        Right Stick X: Rotate Claw
          */
         gp2LSY = gamepad2.left_stick_y;
         gp2LSX = gamepad2.left_stick_x;
