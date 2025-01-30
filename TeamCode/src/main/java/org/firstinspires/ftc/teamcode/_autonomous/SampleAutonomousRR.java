@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode._autonomous;
 
+import android.security.keystore.StrongBoxUnavailableException;
+
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.config.Config;
@@ -46,7 +48,7 @@ public class SampleAutonomousRR extends LinearOpMode {
 
         public class DeploySpecimen implements Action{
             private boolean initialized = false;
-            int targetPos = slide.getCurrentPosition() + 1800;
+            int targetPos = (int) (slide.getCurrentPosition() + 1750 * (537.7/1425.1));
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
@@ -68,7 +70,7 @@ public class SampleAutonomousRR extends LinearOpMode {
 
         public class IdleDown implements Action{
             private boolean initialized = false;
-            int targetPos = slide.getCurrentPosition() + 1000;
+            int targetPos = (int) (slide.getCurrentPosition() + 1000 * (537.7/1425.1));
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
@@ -89,7 +91,7 @@ public class SampleAutonomousRR extends LinearOpMode {
 
         public class ParkDown implements Action{
             private boolean initialized = false;
-            int targetPos = slide.getCurrentPosition() + 2000;
+            int targetPos = (int) (slide.getCurrentPosition() + 3000 * (537.7/1425.1));
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
@@ -110,7 +112,8 @@ public class SampleAutonomousRR extends LinearOpMode {
 
         public class SpecimenUp implements Action{
             private boolean initialized = false;
-            int targetPos = slide.getCurrentPosition() + 3500;
+//            int targetPos = slide.getCurrentPosition() + 3500;
+            int targetPos = (int) (slide.getCurrentPosition() + 3400 * (537.7/1425.1));
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
@@ -131,7 +134,7 @@ public class SampleAutonomousRR extends LinearOpMode {
 
         public class BasketSample implements Action{
             private boolean initialized = false;
-            int targetPos = slide.getCurrentPosition() + 9400;
+            int targetPos = (int) (slide.getCurrentPosition() + 9400 * (537.7/1425.1));
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
@@ -246,27 +249,28 @@ public class SampleAutonomousRR extends LinearOpMode {
         public class SpecimenPickup implements Action{
             private boolean initialized = false;
             private final ElapsedTime timer = new ElapsedTime();
-            int targetPos = pivotMotor.getCurrentPosition() + 1250;
+            int targetPos = pivotMotor.getCurrentPosition() + 1350;
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 if (!initialized){
                     timer.reset();
+                    pivotMotor.setPower(0.6);
                     packet.put("targetPos", targetPos);
                     pivotMotor.setTargetPosition(targetPos);
                     initialized = true;
                     sleep(1000);
                 }
 
-
-//                double time = timer.time();
-//
-//                return time > 5;
-
                 boolean isBusy = pivotMotor.isBusy();
                 packet.put("isBusy", isBusy);
-                return isBusy;
 
+                if (pivotMotor.isBusy()){
+                    return true;
+                } else{
+                    pivotMotor.setPower(0.5);
+                    return false;
+                }
             }
         }
 
@@ -294,8 +298,8 @@ public class SampleAutonomousRR extends LinearOpMode {
         public class OpenClaw implements Action{
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                clawServo.setPower(-0.5);
-                sleep(500);
+                clawServo.setPower(-1);
+                sleep(750);
                 return false;
             }
         }
@@ -350,19 +354,19 @@ public class SampleAutonomousRR extends LinearOpMode {
                 .strafeToConstantHeading(new Vector2d(50, 40), fastVel, fastAccel);
 
         TrajectoryActionBuilder gotoBasket1 = gotoSample1.endTrajectory().fresh()
-                .strafeToLinearHeading(new Vector2d(56, 56), Math.toRadians(45), fastVel, fastAccel);
+                .strafeToLinearHeading(new Vector2d(56, 56), Math.toRadians(60), fastVel, fastAccel);
 
         TrajectoryActionBuilder gotoSample2 = gotoBasket1.endTrajectory().fresh()
                 .strafeToLinearHeading(new Vector2d(61, 40), Math.toRadians(270));
 
         TrajectoryActionBuilder gotoBasket2 = gotoSample2.endTrajectory().fresh()
-                .strafeToLinearHeading(new Vector2d(56, 56), Math.toRadians(45));
+                .strafeToLinearHeading(new Vector2d(56, 56), Math.toRadians(60));
 
         TrajectoryActionBuilder park = gotoBasket2.endTrajectory().fresh()
                 .strafeToLinearHeading(new Vector2d(36, 6), Math.toRadians(180), fastVel, fastAccel);
 
         TrajectoryActionBuilder parkTouch = park.endTrajectory().fresh()
-                .strafeToConstantHeading(new Vector2d(30, 6), fastVel, fastAccel);
+                .strafeToConstantHeading(new Vector2d(24, 6), fastVel, fastAccel);
 //        TrajectoryActionBuilder gotoSample3 = gotoBasket2.endTrajectory().fresh()
 //                .
 
@@ -412,9 +416,9 @@ public class SampleAutonomousRR extends LinearOpMode {
                     claw.closeClaw(),
                     new ParallelAction(
                             GoToBasket1,
-                            pivot.goToStart(),
-                            slide.basketSample()
+                            pivot.goToStart()
                     ),
+                    slide.basketSample(),
                     pivot.basketPivot(),
                     claw.openClaw(),
                     pivot.goToStart(),
@@ -426,9 +430,9 @@ public class SampleAutonomousRR extends LinearOpMode {
                     claw.closeClaw(),
                     new ParallelAction(
                             GoToBasket2,
-                            pivot.goToStart(),
-                            slide.basketSample()
+                            pivot.goToStart()
                     ),
+                    slide.basketSample(),
                     pivot.basketPivot(),
                     claw.openClaw(),
                     pivot.goToStart(),
@@ -436,10 +440,8 @@ public class SampleAutonomousRR extends LinearOpMode {
                         slide.parkDown(),
                         Park
                     ),
-                    new ParallelAction(
-                            pivot.smallPivotForward(),
-                            TouchPark
-                    )
+                    TouchPark,
+                    pivot.basketPivot()
             )
 
         );

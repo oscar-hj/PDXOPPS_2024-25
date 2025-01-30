@@ -136,8 +136,9 @@ public class MainTeleOp_2GP extends LinearOpMode{
     }
     public void readGP1(){
         /*
-        Left Stick X,Y: Flat Movement
-        Right Stick X: Rotation
+        Needs Adjustment
+        Left Stick X,Y: Omnidirectional Movement
+        Right Stick X: Turning
 
         Left Bumper: Slow Mode
         Right Bumper: Turbo Mode
@@ -160,6 +161,7 @@ public class MainTeleOp_2GP extends LinearOpMode{
 
     public void readGP2(){
         /*
+        Needs Adjustment
         Left Bumper: Slow Mode
         Right Bumper: Turbo Mode
 
@@ -170,7 +172,7 @@ public class MainTeleOp_2GP extends LinearOpMode{
         D-Pad Up: Slide Up
         D-Pad Down: Slide Down
 
-        A (Left Button): Open Claw
+        A (Right Button): Open Claw
         B (Bottom Button): Close Claw
 
         Right Stick X: Rotate Claw
@@ -196,7 +198,6 @@ public class MainTeleOp_2GP extends LinearOpMode{
         gp2B = gamepad2.b;
 
         gp2PS = gamepad2.ps;
-
     }
     public void initAll(){
         backRightMotor = hardwareMap.get(DcMotor.class, "BRM");
