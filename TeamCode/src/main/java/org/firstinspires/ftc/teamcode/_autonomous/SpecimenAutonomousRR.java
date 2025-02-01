@@ -46,7 +46,7 @@ public class SpecimenAutonomousRR extends LinearOpMode {
 
         public class DeploySpecimen implements Action{
             private boolean initialized = false;
-            int targetPos = slide.getCurrentPosition() + 2000;
+            int targetPos = (int) (slide.getCurrentPosition() + 1800 * (537.7/1425.1));
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
@@ -54,12 +54,12 @@ public class SpecimenAutonomousRR extends LinearOpMode {
                     packet.put("targetPos", targetPos);
                     slide.setTargetPosition(targetPos);
                     initialized = true;
-                    sleep(1000);
+//                    sleep(1000);
                 }
 
                 boolean isBusy = slide.isBusy();
                 packet.put("isBusy", isBusy);
-                return isBusy;
+                return slide.isBusy();
             }
         }
         public Action deploySpecimen(){
@@ -68,7 +68,7 @@ public class SpecimenAutonomousRR extends LinearOpMode {
 
         public class IdleDown implements Action{
             private boolean initialized = false;
-            int targetPos = slide.getCurrentPosition() + 1000;
+            int targetPos = (int) (slide.getCurrentPosition() + 1000 * (537.7/1425.1));
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
@@ -89,7 +89,7 @@ public class SpecimenAutonomousRR extends LinearOpMode {
 
         public class SpecimenUp implements Action{
             private boolean initialized = false;
-            int targetPos = slide.getCurrentPosition() + 3500;
+            int targetPos = (int) (slide.getCurrentPosition() + 3300 * (537.7/1425.1));
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
@@ -169,10 +169,10 @@ public class SpecimenAutonomousRR extends LinearOpMode {
             return new GoToStart();
         }
 
-        public class SpecimenPickup implements Action{
+        public class  SpecimenPickup implements Action{
             private boolean initialized = false;
             private final ElapsedTime timer = new ElapsedTime();
-            int targetPos = pivotMotor.getCurrentPosition() + 1250;
+            int targetPos = pivotMotor.getCurrentPosition() + 1300;
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
@@ -181,17 +181,12 @@ public class SpecimenAutonomousRR extends LinearOpMode {
                     packet.put("targetPos", targetPos);
                     pivotMotor.setTargetPosition(targetPos);
                     initialized = true;
-                    sleep(1000);
+//                    sleep(1000);
                 }
 
-
-                double time = timer.time();
-
-                return time > 5;
-
-//                boolean isBusy = pivotMotor.isBusy();
-//                packet.put("isBusy", isBusy);
-//                return isBusy;
+                boolean isBusy = pivotMotor.isBusy();
+                packet.put("isBusy", isBusy);
+                return pivotMotor.isBusy();
 
             }
         }
@@ -220,8 +215,8 @@ public class SpecimenAutonomousRR extends LinearOpMode {
         public class OpenClaw implements Action{
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                clawServo.setPower(-0.5);
-                sleep(500);
+                clawServo.setPower(-1);
+                sleep(750);
                 return false;
             }
         }
@@ -240,6 +235,19 @@ public class SpecimenAutonomousRR extends LinearOpMode {
         }
         public Action closeClaw(){
             return new CloseClaw();
+        }
+
+        public class AdjustSpecimen implements Action{
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                clawServo.setPower(-1);
+                sleep(250);
+                clawServo.setPower(1);
+                return false;
+            }
+        }
+        public Action adjustSpecimen(){
+            return new AdjustSpecimen();
         }
     }
 
@@ -269,7 +277,7 @@ public class SpecimenAutonomousRR extends LinearOpMode {
 
         // go to rung where the robot currently holds a specimen
         TrajectoryActionBuilder hangSamplePos1 = drive.actionBuilder(initialPose)
-                .strafeToConstantHeading(new Vector2d(9, 32));
+                .strafeToConstantHeading(new Vector2d(-7, 31));
 
         // routine to drag samples from default space to the observation zone
         // then position itself to get the first specimen
@@ -287,29 +295,29 @@ public class SpecimenAutonomousRR extends LinearOpMode {
 //                .strafeToConstantHeading(new Vector2d(-61, 56), fastVel, fastAccel)  // ^
 //                .strafeToConstantHeading(new Vector2d(-61, 48), fastVel, fastAccel)  // move out of way and position to get specimen
                 .strafeToConstantHeading(new Vector2d(-52, 45), fastVel, fastAccel)  // move out of way and position to get specimen
-                .strafeToSplineHeading(new Vector2d(-47, 48), Math.toRadians(90), accurateVel);
+                .strafeToSplineHeading(new Vector2d(-47, 47.5), Math.toRadians(90));
 
         // gets the specimen and moves to rung
         TrajectoryActionBuilder hangSample1 = dragSamples.endTrajectory().fresh()
-                .strafeToSplineHeading(new Vector2d(6, 40), Math.toRadians(270), fastVel, fastAccel)
-                .strafeToConstantHeading(new Vector2d(6, 32), accurateVel);
+                .strafeToSplineHeading(new Vector2d(-4, 40), Math.toRadians(270), fastVel, fastAccel)
+                .strafeToConstantHeading(new Vector2d(-4, 31), accurateVel);
 
 
         // moves to observation zone and goes to hang location then parks in the
         // observation zone
         TrajectoryActionBuilder collectSpecimen2 = hangSample1.endTrajectory().fresh()
-                .strafeToSplineHeading(new Vector2d(-47.5, 48), Math.toRadians(90), accurateVel);
+                .strafeToSplineHeading(new Vector2d(-47.5, 47.5), Math.toRadians(90), accurateVel);
 
         TrajectoryActionBuilder hangSpecimen2 = collectSpecimen2.endTrajectory().fresh()
-                .strafeToSplineHeading(new Vector2d(3, 40), Math.toRadians(270), fastVel, fastAccel)
-                .strafeToConstantHeading(new Vector2d(3, 32), accurateVel);
+                .strafeToSplineHeading(new Vector2d(-1, 40), Math.toRadians(270), fastVel, fastAccel)
+                .strafeToConstantHeading(new Vector2d(-1, 31), accurateVel);
 
         TrajectoryActionBuilder collectSpecimen3 = hangSpecimen2.endTrajectory().fresh()
-                .strafeToSplineHeading(new Vector2d(-47.5, 48), Math.toRadians(90), accurateVel);
+                .strafeToSplineHeading(new Vector2d(-47.5, 47.5), Math.toRadians(90), accurateVel);
 
         TrajectoryActionBuilder hangSpecimen3 = collectSpecimen3.endTrajectory().fresh()
-                .strafeToSplineHeading(new Vector2d(0, 40), Math.toRadians(270), fastVel, fastAccel)
-                .strafeToConstantHeading(new Vector2d(0, 32), accurateVel);
+                .strafeToSplineHeading(new Vector2d(2, 40), Math.toRadians(270), fastVel, fastAccel)
+                .strafeToConstantHeading(new Vector2d(2, 31), accurateVel);
 
         TrajectoryActionBuilder park = hangSpecimen3.endTrajectory().fresh()
                 .strafeToConstantHeading(new Vector2d(-50, 60), fastVel, fastAccel);
@@ -356,6 +364,7 @@ public class SpecimenAutonomousRR extends LinearOpMode {
                     claw.closeClaw(),
                     pivot.goToStart(),
                     new ParallelAction(
+                            claw.adjustSpecimen(),
                             slide.specimenUp(),
                             HangSamplePos2
                     ),

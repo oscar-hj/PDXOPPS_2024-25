@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode._autonomous;
 
-import android.security.keystore.StrongBoxUnavailableException;
-
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.config.Config;
@@ -56,12 +54,12 @@ public class SampleAutonomousRR extends LinearOpMode {
                     packet.put("targetPos", targetPos);
                     slide.setTargetPosition(targetPos);
                     initialized = true;
-                    sleep(1000);
+//                    sleep(1000);
                 }
 
                 boolean isBusy = slide.isBusy();
                 packet.put("isBusy", isBusy);
-                return isBusy;
+                return slide.isBusy();
             }
         }
         public Action deploySpecimen(){
@@ -91,7 +89,7 @@ public class SampleAutonomousRR extends LinearOpMode {
 
         public class ParkDown implements Action{
             private boolean initialized = false;
-            int targetPos = (int) (slide.getCurrentPosition() + 3000 * (537.7/1425.1));
+            int targetPos = (int) (slide.getCurrentPosition() + 3500 * (537.7/1425.1));
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
@@ -208,7 +206,7 @@ public class SampleAutonomousRR extends LinearOpMode {
                     packet.put("targetPos", targetPos);
                     pivotMotor.setTargetPosition(targetPos);
                     initialized = true;
-                    sleep(500);
+//                    sleep(500);
                 }
 
 //                double time = timer.time();
@@ -223,6 +221,36 @@ public class SampleAutonomousRR extends LinearOpMode {
 
         public Action basketPivot(){
             return new BasketPivot();
+        }
+
+
+        public class TouchPivot implements Action{
+            private boolean initialized = false;
+            private final ElapsedTime timer = new ElapsedTime();
+            int targetPos = pivotMotor.getCurrentPosition() + 400;
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                if (!initialized){
+                    timer.reset();
+                    packet.put("targetPos", targetPos);
+                    pivotMotor.setTargetPosition(targetPos);
+                    initialized = true;
+//                    sleep(500);
+                }
+
+//                double time = timer.time();
+//                packet.put("time", time);
+//                return time < 5;
+
+                boolean isBusy = pivotMotor.isBusy();
+                packet.put("isBusy", isBusy);
+                return pivotMotor.isBusy();
+            }
+        }
+
+        public Action touchPivot(){
+            return new TouchPivot();
         }
 
         public class GoToStart implements Action{
@@ -259,7 +287,7 @@ public class SampleAutonomousRR extends LinearOpMode {
                     packet.put("targetPos", targetPos);
                     pivotMotor.setTargetPosition(targetPos);
                     initialized = true;
-                    sleep(1000);
+//                    sleep(1000);
                 }
 
                 boolean isBusy = pivotMotor.isBusy();
@@ -347,22 +375,22 @@ public class SampleAutonomousRR extends LinearOpMode {
 
 
         // go to rung where the robot currently holds a specimen
-        TrajectoryActionBuilder hangSample = drive.actionBuilder(initialPose)
-                .strafeToConstantHeading(new Vector2d(10, 32));
-
-        TrajectoryActionBuilder gotoSample1 = hangSample.endTrajectory().fresh()
-                .strafeToConstantHeading(new Vector2d(50, 40), fastVel, fastAccel);
-
-        TrajectoryActionBuilder gotoBasket1 = gotoSample1.endTrajectory().fresh()
-                .strafeToLinearHeading(new Vector2d(56, 56), Math.toRadians(60), fastVel, fastAccel);
+        TrajectoryActionBuilder gotoBasket1 = drive.actionBuilder(initialPose)
+                .strafeToSplineHeading(new Vector2d(56, 56), Math.toRadians(60));
 
         TrajectoryActionBuilder gotoSample2 = gotoBasket1.endTrajectory().fresh()
-                .strafeToLinearHeading(new Vector2d(61, 40), Math.toRadians(270));
+                .strafeToSplineHeading(new Vector2d(50, 40), Math.toRadians(270), fastVel, fastAccel);
 
         TrajectoryActionBuilder gotoBasket2 = gotoSample2.endTrajectory().fresh()
+                .strafeToLinearHeading(new Vector2d(56, 56), Math.toRadians(60), fastVel, fastAccel);
+
+        TrajectoryActionBuilder gotoSample3 = gotoBasket2.endTrajectory().fresh()
+                .strafeToLinearHeading(new Vector2d(61, 40), Math.toRadians(270));
+
+        TrajectoryActionBuilder gotoBasket3 = gotoSample3.endTrajectory().fresh()
                 .strafeToLinearHeading(new Vector2d(56, 56), Math.toRadians(60));
 
-        TrajectoryActionBuilder park = gotoBasket2.endTrajectory().fresh()
+        TrajectoryActionBuilder park = gotoBasket3.endTrajectory().fresh()
                 .strafeToLinearHeading(new Vector2d(36, 6), Math.toRadians(180), fastVel, fastAccel);
 
         TrajectoryActionBuilder parkTouch = park.endTrajectory().fresh()
@@ -378,11 +406,11 @@ public class SampleAutonomousRR extends LinearOpMode {
         Actions.runBlocking(claw.closeClaw());
 
         // builds trajectories beforehand
-        Action HangSamplePos1 = hangSample.build();
-        Action GoToSample1 = gotoSample1.build();
-        Action GoToBasket1 = gotoBasket1.build();
+        Action GotoBasket1 = gotoBasket1.build();
         Action GoToSample2 = gotoSample2.build();
         Action GoToBasket2 = gotoBasket2.build();
+        Action GoToSample3 = gotoSample3.build();
+        Action GoToBasket3 = gotoBasket3.build();
         Action Park = park.build();
         Action TouchPark = parkTouch.build();
 
@@ -401,31 +429,16 @@ public class SampleAutonomousRR extends LinearOpMode {
             new SequentialAction(
                     // starting specimen
                     new ParallelAction(
-                            HangSamplePos1,
-                            slide.specimenUp()
+                            GotoBasket1,
+                            slide.basketSample()
                     ),
-                    pivot.smallPivotForward(),
-                    slide.deploySpecimen(),
+                    pivot.basketPivot(),
                     claw.openClaw(),
                     new ParallelAction(
                             pivot.goToStart(),
                             slide.idleDown()
                     ),
-                    GoToSample1,
-                    pivot.specimenPickup(),
-                    claw.closeClaw(),
-                    new ParallelAction(
-                            GoToBasket1,
-                            pivot.goToStart()
-                    ),
-                    slide.basketSample(),
-                    pivot.basketPivot(),
-                    claw.openClaw(),
-                    pivot.goToStart(),
-                    new ParallelAction(
-                            slide.idleDown(),
-                            GoToSample2
-                    ),
+                    GoToSample2,
                     pivot.specimenPickup(),
                     claw.closeClaw(),
                     new ParallelAction(
@@ -437,11 +450,25 @@ public class SampleAutonomousRR extends LinearOpMode {
                     claw.openClaw(),
                     pivot.goToStart(),
                     new ParallelAction(
+                            slide.idleDown(),
+                            GoToSample3
+                    ),
+                    pivot.specimenPickup(),
+                    claw.closeClaw(),
+                    new ParallelAction(
+                            GoToBasket3,
+                            pivot.goToStart()
+                    ),
+                    slide.basketSample(),
+                    pivot.basketPivot(),
+                    claw.openClaw(),
+                    pivot.goToStart(),
+                    new ParallelAction(
                         slide.parkDown(),
                         Park
                     ),
                     TouchPark,
-                    pivot.basketPivot()
+                    pivot.touchPivot()
             )
 
         );

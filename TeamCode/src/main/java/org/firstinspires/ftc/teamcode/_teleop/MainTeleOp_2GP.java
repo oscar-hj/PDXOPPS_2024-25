@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 
 @TeleOp(name = "MainTeleOp_2GP")
@@ -15,9 +16,9 @@ public class MainTeleOp_2GP extends LinearOpMode{
     DcMotor pivotMotor, slideMotor, hookMotor;
     CRServo clawServo, pivotServo;
     HuskyLens lens;
-    int pivotPos, specimenPickupPos;
+    int pivotPos, specimenPickupPos, slidePos;
     double gp1LSX, gp1LSY, gp1RSX, gp1RSY, gp1LT, gp1RT, gp2LSY, gp2RSY, gp2LT, gp2RT, gp2LSX, gp2RSX;
-    boolean gp1LB, gp1RB, gp2DPadUp, gp2DPadDown, gp2DPadLeft, gp2DPadRight, gp2PS, gp2A, gp2B, gp2LB, gp2RB;
+    boolean gp1LB, gp1RB, gp2DPadUp, gp2DPadDown, gp2DPadLeft, gp2DPadRight, gp2PS, gp2A, gp2B, gp2LB, gp2RB, gp2Back;
     double motorSpeedgp1, motorSpeedgp2, slowSpeed = 0.1, normSpeed = 0.5, boostSpeed = 1, deadzone = 0.05;
 
     @Override
@@ -27,8 +28,12 @@ public class MainTeleOp_2GP extends LinearOpMode{
 
         if(opModeIsActive()){
             pivotPos = pivotMotor.getCurrentPosition();
-            specimenPickupPos = pivotMotor.getCurrentPosition() + 1300;
+            slidePos = slideMotor.getCurrentPosition();
+
+            slideMotor.setPower(slidePos);
             pivotMotor.setTargetPosition(pivotPos);
+
+            specimenPickupPos = pivotMotor.getCurrentPosition() + 1340;
             while(opModeIsActive()) {
                 //reads the gamepad inputs and assigns them to variables
                 readGP1();
@@ -69,15 +74,22 @@ public class MainTeleOp_2GP extends LinearOpMode{
                 } else if (gp2RB) {
                     motorSpeedgp2 = boostSpeed;
                 } else {
-                    motorSpeedgp2 = normSpeed;
+                    motorSpeedgp2 = 0.3;
+                }
+
+                // resets pivot pos
+                if(gp2Back){
+                    specimenPickupPos = pivotMotor.getCurrentPosition() + 1360;
                 }
 
                 //pivot slide
-                if (gp2LT > deadzone){
-                    pivotPos = drivePivotMotor(-gp2LT, motorSpeedgp2);
-                } else if (gp2RT > deadzone) {
-                    pivotPos = drivePivotMotor(gp2RT, motorSpeedgp2);
-                } else if (gp2LT < deadzone && gp2RT < deadzone && !gp2PS){
+                if (abs(gp2RSY) > deadzone){
+                    if (gp2RSY > 0 && pivotPos >= specimenPickupPos){
+                        lockPivotMotor(pivotPos);
+                        continue;
+                    }
+                    pivotPos = drivePivotMotor(gp2RSY, motorSpeedgp2);
+                } else if (!gp2PS){
                     lockPivotMotor(pivotPos);
                 }
 
@@ -89,26 +101,23 @@ public class MainTeleOp_2GP extends LinearOpMode{
 
                 // slide
                 if (gp2DPadUp) {
-                    if(gp2LB){
-                        motorSpeedgp2 = 0.1;
-                    }
-                    slideMotor.setPower(1 * motorSpeedgp2);
+                    slidePos = driveSlideMotor(1, motorSpeedgp2);
                 }else if(gp2DPadDown){
-                    slideMotor.setPower(-1 * motorSpeedgp2);
+                    slidePos = driveSlideMotor(-1, motorSpeedgp2);
                 }else{
-                    slideMotor.setPower(0);
+                    lockSlideMotor(slidePos);
                 }
 
                 // open/close claw
-                if (gp2A){
-                    clawServo.setPower(1);
-                } else if (gp2B) {
+                if (gp2LT > deadzone){
                     clawServo.setPower(-1);
+                } else if (gp2RT > deadzone) {
+                    clawServo.setPower(1);
                 }
 
                 // rotate claw
                 if (abs(gp2RSX) > deadzone){
-                    pivotServo.setPower(gp2RSX);
+                    pivotServo.setPower(-gp2RSX * motorSpeedgp2);
                 }else{
                     pivotServo.setPower(0);
                 }
@@ -198,6 +207,8 @@ public class MainTeleOp_2GP extends LinearOpMode{
         gp2B = gamepad2.b;
 
         gp2PS = gamepad2.ps;
+
+        gp2Back = gamepad2.back;
     }
     public void initAll(){
         backRightMotor = hardwareMap.get(DcMotor.class, "BRM");
@@ -217,6 +228,7 @@ public class MainTeleOp_2GP extends LinearOpMode{
 
         backRightMotor.setDirection(DcMotor.Direction.REVERSE);
         frontRightMotor.setDirection(DcMotor.Direction.REVERSE);
+//        pivotMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
 
         backLeftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -255,6 +267,20 @@ public class MainTeleOp_2GP extends LinearOpMode{
         pivotMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         telemetry.addData("pivotEncoder", pivotEncoderPosition);
         pivotMotor.setPower(0.5);
+    }
+
+    public int driveSlideMotor(double val, double speed) {
+        slideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        slideMotor.setPower(val * speed);
+        telemetry.addData("slideMotor", slideMotor.getCurrentPosition());
+        return slideMotor.getCurrentPosition();
+    }
+
+    public void lockSlideMotor(int slideEncoderPosition){
+        slideMotor.setTargetPosition(slideEncoderPosition);
+        slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        telemetry.addData("slideEncoder", slideEncoderPosition);
+        slideMotor.setPower(1);
     }
 
     public void stopDriveMotors() {
