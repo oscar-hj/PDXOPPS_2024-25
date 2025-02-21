@@ -1,9 +1,6 @@
 package org.firstinspires.ftc.teamcode._autonomous;
 
-import androidx.annotation.NonNull;
-
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.AccelConstraint;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.AngularVelConstraint;
@@ -19,13 +16,9 @@ import com.acmerobotics.roadrunner.VelConstraint;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.teamcode._autonomous.AutoComponents.*;
 
 import java.util.Arrays;
 
@@ -33,229 +26,6 @@ import java.util.Arrays;
 @Config
 @Autonomous(name = "SpecimenAutonomousRR", group = "Autonomous")
 public class SpecimenAutonomousRR extends LinearOpMode {
-    // slide class
-    public class Slide {
-        private final DcMotor slide;
-
-        public Slide(HardwareMap hardwareMap){
-            slide = hardwareMap.get(DcMotor.class, "slideMotor");
-            slide.setTargetPosition(slide.getCurrentPosition());
-            slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            slide.setPower(1);
-        }
-
-        public class DeploySpecimen implements Action{
-            private boolean initialized = false;
-            int targetPos = (int) (slide.getCurrentPosition() + 1725 * (537.7/1425.1));
-
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet){
-                if (!initialized){
-                    packet.put("targetPos", targetPos);
-                    slide.setTargetPosition(targetPos);
-                    initialized = true;
-//                    sleep(1000);
-                }
-
-                boolean isBusy = slide.isBusy();
-                packet.put("isBusy", isBusy);
-                return slide.isBusy();
-            }
-        }
-        public Action deploySpecimen(){
-            return new Slide.DeploySpecimen();
-        }
-
-        public class IdleDown implements Action{
-            private boolean initialized = false;
-            int targetPos = (int) (slide.getCurrentPosition() + 1000 * (537.7/1425.1));
-
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet){
-                if (!initialized){
-                    packet.put("targetPos", targetPos);
-                    slide.setTargetPosition(targetPos);
-                    initialized = true;
-                }
-
-                boolean isBusy = slide.isBusy();
-                packet.put("isBusy", isBusy);
-                return slide.isBusy();
-            }
-        }
-        public Action idleDown(){
-            return new Slide.IdleDown();
-        }
-
-        public class SpecimenUp implements Action{
-            private boolean initialized = false;
-            int targetPos = (int) (slide.getCurrentPosition() + 3300 * (537.7/1425.1));
-
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet){
-                if (!initialized){
-                    packet.put("targetPos", targetPos);
-                    slide.setTargetPosition(targetPos);
-                    initialized = true;
-                }
-
-                boolean isBusy = slide.isBusy();
-                packet.put("isBusy", isBusy);
-                return slide.isBusy();
-            }
-        }
-        public Action specimenUp(){
-            return new Slide.SpecimenUp();
-        }
-    }
-
-    public class Pivot {
-        private final DcMotor pivotMotor;
-
-        public Pivot(HardwareMap hardwareMap){
-            pivotMotor = hardwareMap.get(DcMotor.class, "pivotMotor");
-            pivotMotor.setTargetPosition(pivotMotor.getCurrentPosition());
-            pivotMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            pivotMotor.setPower(0.5);
-            pivotMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-        }
-
-        public class SmallPivotForward implements Action{
-            private boolean initialized = false;
-            private final ElapsedTime timer = new ElapsedTime();
-            int targetPos = pivotMotor.getCurrentPosition() + 130;
-
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet){
-                if (!initialized){
-                    timer.reset();
-                    packet.put("targetPos", targetPos);
-                    pivotMotor.setTargetPosition(targetPos);
-                    initialized = true;
-                }
-
-                double time = timer.time();
-                packet.put("time", time);
-//                return time < 5;
-
-                boolean isBusy = pivotMotor.isBusy();
-                packet.put("isBusy", isBusy);
-                return (pivotMotor.isBusy() && time <= 0.5);
-            }
-        }
-
-        public Action smallPivotForward(){
-            return new SmallPivotForward();
-        }
-
-        public class GoToStart implements Action{
-            private boolean initialized = false;
-            int targetPos = pivotMotor.getCurrentPosition();
-
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet){
-                if (!initialized){
-                    pivotMotor.setPower(1);
-                    packet.put("targetPos", targetPos);
-                    pivotMotor.setTargetPosition(targetPos);
-                    initialized = true;
-                }
-
-                boolean isBusy = pivotMotor.isBusy();
-                packet.put("isBusy", isBusy);
-                if (pivotMotor.isBusy()){
-                    return true;
-                } else{
-                    pivotMotor.setPower(0.5);
-                    return false;
-                }
-            }
-        }
-        public Action goToStart(){
-            return new GoToStart();
-        }
-
-        public class  SpecimenPickup implements Action{
-            private boolean initialized = false;
-            private final ElapsedTime timer = new ElapsedTime();
-            int targetPos = pivotMotor.getCurrentPosition() + 1300;
-
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet){
-                if (!initialized){
-                    timer.reset();
-                    packet.put("targetPos", targetPos);
-                    pivotMotor.setTargetPosition(targetPos);
-                    initialized = true;
-//                    sleep(1000);
-                }
-
-                boolean isBusy = pivotMotor.isBusy();
-                packet.put("isBusy", isBusy);
-                return pivotMotor.isBusy();
-
-            }
-        }
-
-        public Action specimenPickup(){
-            return new SpecimenPickup();
-        }
-
-    }
-
-    // claw class
-    public class Claw {
-        private final CRServo clawServo;
-
-        // pivot servo not in use
-        //private CRServo pivotServo;
-
-        public Claw(HardwareMap hardwareMap){
-            clawServo = hardwareMap.get(CRServo.class, "clawServo");
-
-            // locks the rotation servo in place
-            CRServo rotationServo = hardwareMap.get(CRServo.class, "pivotServo");
-            rotationServo.setPower(0);
-        }
-
-        public class OpenClaw implements Action{
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet){
-                clawServo.setPower(-1);
-                sleep(750);
-                return false;
-            }
-        }
-        public Action openClaw(){
-            return new OpenClaw();
-        }
-
-        public class CloseClaw implements Action{
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet){
-                clawServo.setPower(1);
-                sleep(750);
-                return false;
-            }
-
-        }
-        public Action closeClaw(){
-            return new CloseClaw();
-        }
-
-        public class AdjustSpecimen implements Action{
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet){
-                clawServo.setPower(-1);
-                sleep(250);
-                clawServo.setPower(1);
-                return false;
-            }
-        }
-        public Action adjustSpecimen(){
-            return new AdjustSpecimen();
-        }
-    }
 
     @Override
     public void runOpMode(){
@@ -302,7 +72,7 @@ public class SpecimenAutonomousRR extends LinearOpMode {
 //                .strafeToConstantHeading(new Vector2d(-61, 56), fastVel, fastAccel)  // ^
 //                .strafeToConstantHeading(new Vector2d(-61, 48), fastVel, fastAccel)  // move out of way and position to get specimen
                 .strafeToConstantHeading(new Vector2d(-52, 45), fastVel, superAccel)  // move out of way and position to get specimen
-                .strafeToSplineHeading(new Vector2d(-47, 47.5), Math.toRadians(90));
+                .strafeToSplineHeading(new Vector2d(-49, 47.5), Math.toRadians(90));
 
         // gets the specimen and moves to rung
         TrajectoryActionBuilder hangSample1 = dragSamples.endTrajectory().fresh()
@@ -313,7 +83,7 @@ public class SpecimenAutonomousRR extends LinearOpMode {
         // moves to observation zone and goes to hang location then parks in the
         // observation zone
         TrajectoryActionBuilder collectSpecimen2 = hangSample1.endTrajectory().fresh()
-                .strafeToSplineHeading(new Vector2d(-47, 49), Math.toRadians(90), fastVel, fastAccel);
+                .strafeToSplineHeading(new Vector2d(-49, 49), Math.toRadians(90), fastVel, fastAccel);
 
         TrajectoryActionBuilder hangSpecimen2 = collectSpecimen2.endTrajectory().fresh()
                 .strafeToSplineHeading(new Vector2d(-1, 40), Math.toRadians(270), fastVel, superAccel)
