@@ -1,25 +1,18 @@
 package org.firstinspires.ftc.teamcode._autonomous;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.roadrunner.AccelConstraint;
 import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.AngularVelConstraint;
-import com.acmerobotics.roadrunner.MinVelConstraint;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.ProfileAccelConstraint;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
-import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.Vector2d;
-import com.acmerobotics.roadrunner.VelConstraint;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode._autonomous.AutoComponents.*;
-import java.util.Arrays;
 
 
 @Config
@@ -37,46 +30,41 @@ public class SampleAutonomousRR extends LinearOpMode {
         Slide slide = new Slide(hardwareMap);
         Pivot pivot = new Pivot(hardwareMap);
 
-        // velocity and acceleration constraints for fast movements and accurate movements
-        VelConstraint accurateVel = new MinVelConstraint(Arrays.asList(
-                new TranslationalVelConstraint(40),
-                new AngularVelConstraint(Math.PI / 3)
-        ));
-        AccelConstraint accurateAccel = new ProfileAccelConstraint(-15, 15);
-
-        VelConstraint fastVel = new MinVelConstraint(Arrays.asList(
-                new TranslationalVelConstraint(80),
-                new AngularVelConstraint(Math.PI)
-        ));
-        AccelConstraint fastAccel = new ProfileAccelConstraint(-45, 45);
-
-
-        // go to rung where the robot currently holds a specimen
         TrajectoryActionBuilder gotoBasket1 = drive.actionBuilder(initialPose)
                 .strafeToSplineHeading(new Vector2d(56, 56), Math.toRadians(60));
 
+        // rotates to sample
         TrajectoryActionBuilder gotoSample2 = gotoBasket1.endTrajectory().fresh()
-                .strafeToSplineHeading(new Vector2d(50, 40), Math.toRadians(270), fastVel, fastAccel);
+                .strafeToLinearHeading(new Vector2d(55, 56), Math.toRadians(265));
 
+        // goes to high basket and deploys
         TrajectoryActionBuilder gotoBasket2 = gotoSample2.endTrajectory().fresh()
-                .strafeToLinearHeading(new Vector2d(56, 56), Math.toRadians(60), fastVel, fastAccel);
+                .strafeToLinearHeading(new Vector2d(56, 56), Math.toRadians(45));
 
+        // rotates to sample
         TrajectoryActionBuilder gotoSample3 = gotoBasket2.endTrajectory().fresh()
-                .strafeToLinearHeading(new Vector2d(61, 40), Math.toRadians(270));
+                .strafeToLinearHeading(new Vector2d(55, 56), Math.toRadians(280));
 
+        // goes to high basket and deploys
         TrajectoryActionBuilder gotoBasket3 = gotoSample3.endTrajectory().fresh()
-                .strafeToLinearHeading(new Vector2d(56, 56), Math.toRadians(60));
+                .strafeToLinearHeading(new Vector2d(56, 56), Math.toRadians(45));
 
-        TrajectoryActionBuilder park = gotoBasket3.endTrajectory().fresh()
-                .strafeToLinearHeading(new Vector2d(36, 6), Math.toRadians(180), fastVel, fastAccel);
+        // rotates a bit before sample to pivot down safely
+        TrajectoryActionBuilder positionSample4 = gotoBasket3.endTrajectory().fresh()
+                .strafeToLinearHeading(new Vector2d(55.5, 56), Math.toRadians(280));
 
-        TrajectoryActionBuilder parkTouch = park.endTrajectory().fresh()
-                .strafeToConstantHeading(new Vector2d(24, 6), fastVel, fastAccel);
-//        TrajectoryActionBuilder gotoSample3 = gotoBasket2.endTrajectory().fresh()
-//                .
+        // rotates the rest of the way to sample
+        TrajectoryActionBuilder gotoSample4 = positionSample4.endTrajectory().fresh()
+                .strafeToLinearHeading(new Vector2d(55, 56), Math.toRadians(300));
 
+        // goes to high basket and deploys
+        TrajectoryActionBuilder gotoBasket4 = gotoSample4.endTrajectory().fresh()
+                .strafeToLinearHeading(new Vector2d(56, 56), Math.toRadians(45));
 
-
+        // goes to parking position
+        TrajectoryActionBuilder park = gotoBasket4.endTrajectory().fresh()
+                .setTangent(Math.toRadians(270))
+                .splineToLinearHeading(new Pose2d(24, 6, Math.toRadians(180)), Math.toRadians(180));
 
 
         // closes claw to grab starting specimen
@@ -88,12 +76,28 @@ public class SampleAutonomousRR extends LinearOpMode {
         Action GoToBasket2 = gotoBasket2.build();
         Action GoToSample3 = gotoSample3.build();
         Action GoToBasket3 = gotoBasket3.build();
+        Action PositionSample4 = positionSample4.build();
+        Action GoToSample4 = gotoSample4.build();
+        Action GoToBasket4 = gotoBasket4.build();
         Action Park = park.build();
-        Action TouchPark = parkTouch.build();
 
 
+        // loop after init but before start
         while (!isStopRequested() && !opModeIsActive()){
-            telemetry.addData("Ready", true);
+            telemetry.addData("Parallel (Left) Encoder Check", drive.leftFront.getCurrentPosition());
+            telemetry.addData("Perpendicular (Right) Encoder Check", drive.rightBack.getCurrentPosition());
+
+            // if either of the encoders are reading 0, outputs warning to check encoders (Encoders are not working properly)
+            // **encoders restart after turning off**
+            if(drive.leftFront.getCurrentPosition() == 0 || drive.rightBack.getCurrentPosition() == 0){
+                telemetry.addData("WARNING", "CHECK ENCODERS");
+                telemetry.addData("WARNING!", "CHECK ENCODERS");
+                telemetry.addData("WARNING!!", "CHECK ENCODERS");
+                telemetry.addData("Ready", "FALSE");
+            } else{
+                telemetry.addData("Ready", "True");
+            }
+
             telemetry.update();
         }
 
@@ -101,52 +105,69 @@ public class SampleAutonomousRR extends LinearOpMode {
         if (isStopRequested()) return;
 
 
-
+        // Autonomous Routine
         Actions.runBlocking(
-            new SequentialAction(
-                    // starting specimen
-                    new ParallelAction(
-                            GotoBasket1,
-                            slide.basketSample()
-                    ),
-                    pivot.basketPivot(),
-                    claw.openClaw(),
-                    new ParallelAction(
-                            pivot.goToStart(),
-                            slide.idleDown()
-                    ),
-                    GoToSample2,
-                    pivot.specimenPickup(),
-                    claw.closeClaw(),
-                    new ParallelAction(
-                            GoToBasket2,
-                            pivot.goToStart()
-                    ),
-                    slide.basketSample(),
-                    pivot.basketPivot(),
-                    claw.openClaw(),
-                    pivot.goToStart(),
-                    new ParallelAction(
-                            slide.idleDown(),
-                            GoToSample3
-                    ),
-                    pivot.specimenPickup(),
-                    claw.closeClaw(),
-                    new ParallelAction(
-                            GoToBasket3,
-                            pivot.goToStart()
-                    ),
-                    slide.basketSample(),
-                    pivot.basketPivot(),
-                    claw.openClaw(),
-                    pivot.goToStart(),
-                    new ParallelAction(
-                        slide.parkDown(),
-                        Park
-                    ),
-                    TouchPark,
-                    pivot.touchPivot()
-            )
+                new SequentialAction(
+                        // starting sample
+                        new ParallelAction(
+                                GotoBasket1,
+                                slide.basketSample()
+                        ),
+                        pivot.basketPivot(),
+                        claw.openClaw(),
+                        pivot.goToStart(),
+                        // second sample
+                        new ParallelAction(
+                                GoToSample2,
+                                slide.extendedSamplePickup()
+                        ),
+                        pivot.specimenPickup(),
+                        claw.closeClaw(),
+                        pivot.goToStart(),
+                        new ParallelAction(
+                                GoToBasket2,
+                                slide.basketSample()
+                        ),
+                        pivot.basketPivot(),
+                        claw.openClaw(),
+                        pivot.goToStart(),
+                        //third sample
+                        new ParallelAction(
+                                slide.extendedSamplePickup(),
+                                GoToSample3
+                        ),
+                        pivot.specimenPickup(),
+                        claw.closeClaw(),
+                        pivot.goToStart(),
+                        new ParallelAction(
+                                GoToBasket3,
+                                slide.basketSample()
+                        ),
+                        pivot.basketPivot(),
+                        claw.openClaw(),
+                        pivot.goToStart(),
+                        //fourth sample
+                        new ParallelAction(
+                                PositionSample4,
+                                slide.extendedSamplePickup()
+                        ),
+                        pivot.specimenPickup(),
+                        GoToSample4,
+                        claw.closeClaw(),
+                        pivot.goToStart(),
+                        new ParallelAction(
+                                GoToBasket4,
+                                slide.basketSample()
+                        ),
+                        pivot.basketPivot(),
+                        claw.openClaw(),
+                        // parking
+                        new ParallelAction(
+                                slide.idleDown(),
+                                Park
+                        ),
+                        pivot.touchPivot()
+                )
 
         );
     }

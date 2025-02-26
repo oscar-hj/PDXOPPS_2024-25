@@ -113,7 +113,19 @@ public class SpecimenAutonomousRR extends LinearOpMode {
         Action Park = park.build();
 
         while (!isStopRequested() && !opModeIsActive()){
-            telemetry.addData("Ready", true);
+            telemetry.addData("Parallel (Left) Encoder Check", drive.leftFront.getCurrentPosition());
+            telemetry.addData("Perpendicular (Right) Encoder Check", drive.rightBack.getCurrentPosition());
+
+            // if either of the encoders are reading 0, outputs warning to check encoders (Encoders are not working properly)
+            if(drive.leftFront.getCurrentPosition() == 0 || drive.rightBack.getCurrentPosition() == 0){
+                telemetry.addData("WARNING", "CHECK ENCODERS");
+                telemetry.addData("WARNING!", "CHECK ENCODERS");
+                telemetry.addData("WARNING!!", "CHECK ENCODERS");
+                telemetry.addData("Ready", "FALSE");
+            } else{
+                telemetry.addData("Ready", "True");
+            }
+
             telemetry.update();
         }
 
