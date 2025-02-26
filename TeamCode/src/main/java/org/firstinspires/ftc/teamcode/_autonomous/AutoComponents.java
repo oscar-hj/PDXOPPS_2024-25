@@ -117,7 +117,7 @@ public class AutoComponents {
 
         public class BasketSample implements Action {
             private boolean initialized = false;
-            int targetPos = (int) (slide.getCurrentPosition() + 9400 * (537.7 / 1425.1));
+            int targetPos = (int) (slide.getCurrentPosition() + 10000 * (537.7 / 1425.1));
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
@@ -136,6 +136,29 @@ public class AutoComponents {
         public Action basketSample() {
             return new BasketSample();
         }
+
+
+        public class ExtendedSamplePickup implements Action {
+            private boolean initialized = false;
+            int targetPos = (int) (slide.getCurrentPosition() + 6000 * (537.7 / 1425.1));
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                if (!initialized) {
+                    packet.put("targetPos", targetPos);
+                    slide.setTargetPosition(targetPos);
+                    initialized = true;
+                }
+
+                boolean isBusy = slide.isBusy();
+                packet.put("isBusy", isBusy);
+                return slide.isBusy();
+            }
+        }
+
+        public Action extendedSamplePickup() {
+            return new ExtendedSamplePickup();
+        }
     }
 
 
@@ -150,7 +173,7 @@ public class AutoComponents {
             pivotMotor = hardwareMap.get(DcMotor.class, "pivotMotor");
             pivotMotor.setTargetPosition(pivotMotor.getCurrentPosition());
             pivotMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            pivotMotor.setPower(0.5);
+            pivotMotor.setPower(1);
             pivotMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         }
 
@@ -254,7 +277,7 @@ public class AutoComponents {
         public class SpecimenPickup implements Action {
             private boolean initialized = false;
             private final ElapsedTime timer = new ElapsedTime();
-            int targetPos = pivotMotor.getCurrentPosition() + 1350;
+            int targetPos = pivotMotor.getCurrentPosition() + 1400;
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
@@ -264,16 +287,15 @@ public class AutoComponents {
                     packet.put("targetPos", targetPos);
                     pivotMotor.setTargetPosition(targetPos);
                     initialized = true;
-//                    sleep(1000);
                 }
 
                 boolean isBusy = pivotMotor.isBusy();
                 packet.put("isBusy", isBusy);
 
-                if (pivotMotor.isBusy()) {
+                if (pivotMotor.isBusy()){
                     return true;
-                } else {
-                    pivotMotor.setPower(0.5);
+                } else{
+                    pivotMotor.setPower(1);
                     return false;
                 }
             }
